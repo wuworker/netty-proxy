@@ -32,3 +32,4 @@ build/
 
 ### Application ###
 *.log
+*.pid
