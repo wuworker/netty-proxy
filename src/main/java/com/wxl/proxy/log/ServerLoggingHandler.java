@@ -1,4 +1,4 @@
-package com.wxl.proxy.common;
+package com.wxl.proxy.log;
 
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandler;

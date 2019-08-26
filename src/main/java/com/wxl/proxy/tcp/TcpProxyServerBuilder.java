@@ -1,10 +1,17 @@
 package com.wxl.proxy.tcp;
 
+import com.wxl.proxy.common.ProxyChannelInitializer;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.ServerSocketChannel;
+import io.netty.channel.socket.SocketChannel;
 import lombok.Getter;
+import org.springframework.util.CollectionUtils;
 
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Create by wuxingle on 2019/8/17
@@ -26,6 +33,12 @@ public class TcpProxyServerBuilder {
 
     @Getter
     private InetSocketAddress remoteAddress;
+
+    private List<ProxyChannelInitializer<SocketChannel, TcpProxyServer>> frontHandlerInitializes = new ArrayList<>();
+
+    private List<ProxyChannelInitializer<ServerSocketChannel, TcpProxyServer>> serverHandlerInitializes = new ArrayList<>();
+
+    private List<ProxyChannelInitializer<SocketChannel, TcpProxyServer>> backendHandlerInitializes = new ArrayList<>();
 
     private EventLoopGroup bossGroup;
 
@@ -61,6 +74,39 @@ public class TcpProxyServerBuilder {
         return this;
     }
 
+    public TcpProxyServerBuilder addFrontHandlerInitializer(
+            ProxyChannelInitializer<SocketChannel, TcpProxyServer> channelInitializer) {
+        frontHandlerInitializes.add(channelInitializer);
+        return this;
+    }
+
+    public TcpProxyServerBuilder addServerHandlerInitializers(
+            ProxyChannelInitializer<ServerSocketChannel, TcpProxyServer> channelInitializer) {
+        serverHandlerInitializes.add(channelInitializer);
+        return this;
+    }
+
+    public TcpProxyServerBuilder addBackendHandlerInitializer(
+            ProxyChannelInitializer<SocketChannel, TcpProxyServer> channelInitializer) {
+        backendHandlerInitializes.add(channelInitializer);
+        return this;
+    }
+
+    public TcpProxyServerBuilder setFrontHandlerInitializer(List<ProxyChannelInitializer<SocketChannel, TcpProxyServer>> list) {
+        frontHandlerInitializes = Collections.unmodifiableList(list);
+        return this;
+    }
+
+    public TcpProxyServerBuilder setServerHandlerInitializers(List<ProxyChannelInitializer<ServerSocketChannel, TcpProxyServer>> list) {
+        serverHandlerInitializes = Collections.unmodifiableList(list);
+        return this;
+    }
+
+    public TcpProxyServerBuilder setBackendHandlerInitializer(List<ProxyChannelInitializer<SocketChannel, TcpProxyServer>> list) {
+        backendHandlerInitializes = Collections.unmodifiableList(list);
+        return this;
+    }
+
     public TcpProxyServerBuilder remoteAddress(InetSocketAddress remoteAddress) {
         this.remoteAddress = remoteAddress;
         return this;
@@ -73,8 +119,30 @@ public class TcpProxyServerBuilder {
         if (workGroup == null) {
             workGroup = new NioEventLoopGroup(workThreads);
         }
-        return new TcpProxyServer(name, bindPort, remoteAddress, bossGroup, workGroup);
-    }
+        TcpProxyServer server = new TcpProxyServer(name, bindPort, remoteAddress, bossGroup, workGroup);
 
+        if (!CollectionUtils.isEmpty(serverHandlerInitializes)) {
+            server.setServerHandlerInitializer((channel, server1) -> {
+                for (ProxyChannelInitializer<ServerSocketChannel, TcpProxyServer> initialize : serverHandlerInitializes) {
+                    initialize.init(channel, server1);
+                }
+            });
+        }
+        if (!CollectionUtils.isEmpty(frontHandlerInitializes)) {
+            server.setFrontHandlerInitializer((channel, server1) -> {
+                for (ProxyChannelInitializer<SocketChannel, TcpProxyServer> initialize : frontHandlerInitializes) {
+                    initialize.init(channel, server1);
+                }
+            });
+        }
+        if (!CollectionUtils.isEmpty(backendHandlerInitializes)) {
+            server.setBackendHandlerInitializer((channel, server1) -> {
+                for (ProxyChannelInitializer<SocketChannel, TcpProxyServer> initialize : backendHandlerInitializes) {
+                    initialize.init(channel, server1);
+                }
+            });
+        }
+        return server;
+    }
 }
 

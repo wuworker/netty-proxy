@@ -31,5 +31,6 @@ build/
 .vscode/
 
 ### Application ###
+logs
 *.log
 *.pid

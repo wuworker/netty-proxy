@@ -19,8 +19,8 @@ proxy:
         bind-port: 9999
         remote-host: localhost
         remote-port: 3306
-      redis-proxy:
-        bind-port: 9998
-        remote-host: localhost
-        remote-port: 6379
+#      redis-proxy:
+#        bind-port: 9998
+#        remote-host: localhost
+#        remote-port: 6379
 

@@ -16,3 +16,4 @@ public class TcpProxyServerProperties {
     private int remotePort;
 
 }
+

@@ -1,12 +1,17 @@
 package com.wxl.proxy.tcp;
 
+import com.wxl.proxy.common.ProxyChannelInitializer;
+import com.wxl.proxy.log.LoggingChannelFutureListener;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
+import io.netty.channel.socket.SocketChannel;
 import io.netty.util.ReferenceCountUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
+
+import static com.wxl.proxy.server.ProxyServer.*;
 
 /**
  * Create by wuxingle on 2019/8/17
@@ -15,27 +20,43 @@ import java.net.InetSocketAddress;
 @Slf4j
 public class TcpProxyFrontHandler extends ChannelInboundHandlerAdapter {
 
+    private TcpProxyServer server;
+
     private final InetSocketAddress remoteAddress;
 
     private Channel outboundChannel;
 
-    public TcpProxyFrontHandler(InetSocketAddress remoteAddress) {
-        this.remoteAddress = remoteAddress;
+    private ProxyChannelInitializer<SocketChannel, TcpProxyServer> backendHandlerInitializer;
+
+    public TcpProxyFrontHandler(TcpProxyServer server,
+                                ProxyChannelInitializer<SocketChannel, TcpProxyServer> backendHandlerInitializer) {
+        this.server = server;
+        this.remoteAddress = server.getRemoteAddress();
+        this.backendHandlerInitializer = backendHandlerInitializer;
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
-        log.info("client {} is connect success!", ctx.channel().remoteAddress());
         final Channel inboundChannel = ctx.channel();
         Bootstrap bootstrap = new Bootstrap();
         bootstrap.group(inboundChannel.eventLoop())
                 .channel(inboundChannel.getClass())
-                .handler(new TcpProxyBackendHandler(inboundChannel))
+                .attr(ATTR_PROXY_NAME, inboundChannel.attr(ATTR_PROXY_NAME).get())
+                .attr(ATTR_FRONT_CHANNEL, inboundChannel)
+                .handler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel ch) throws Exception {
+                        ch.pipeline().addLast(logEnhance(new TcpProxyBackendHandler(inboundChannel)));
+                        if (backendHandlerInitializer != null) {
+                            backendHandlerInitializer.init(ch, server);
+                        }
+                    }
+                })
                 .option(ChannelOption.AUTO_READ, false);
 
         ChannelFuture future = bootstrap.connect(remoteAddress);
         outboundChannel = future.channel();
-        future.addListener(f -> {
+        future.addListener((LoggingChannelFutureListener) f -> {
             if (f.isSuccess()) {
                 log.info("remote host '{}' connect success", remoteAddress);
                 inboundChannel.read();

@@ -56,7 +56,7 @@ public class TcpProxyServerManager implements SmartLifecycle {
                         server.stop();
                     }
                 } catch (Throwable e) {
-                    log.error("server {} stop is error", server.getName(), e);
+                    log.error("server {} stop is error", server.name(), e);
                 }
             }
         } finally {
