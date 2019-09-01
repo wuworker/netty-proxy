@@ -1,59 +1,51 @@
 package com.wxl.proxy.tcp;
 
+import com.wxl.proxy.common.ProxyBackendHandler;
 import com.wxl.proxy.common.ProxyChannelInitializer;
-import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.Unpooled;
-import io.netty.channel.*;
+import com.wxl.proxy.common.ProxyFrontHandler;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.util.ReferenceCountUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
 
-import static com.wxl.proxy.server.ProxyServer.*;
+import static com.wxl.proxy.server.ProxyServer.ATTR_BACKEND_CHANNEL;
+import static com.wxl.proxy.server.ProxyServer.logListener;
 
 /**
  * Create by wuxingle on 2019/8/17
  * 代理前端处理
  */
 @Slf4j
-public class TcpProxyFrontHandler extends ChannelInboundHandlerAdapter {
+public class TcpProxyFrontHandler extends ProxyFrontHandler<TcpProxyConfig> {
 
-    private TcpProxyServer server;
+    public TcpProxyFrontHandler(TcpProxyConfig config,
+                                ProxyChannelInitializer<SocketChannel, TcpProxyConfig> backendHandlerInitializer) {
+        super(config, backendHandlerInitializer);
+    }
 
-    private final InetSocketAddress remoteAddress;
-
-    private Channel outboundChannel;
-
-    private ProxyChannelInitializer<SocketChannel, TcpProxyServer> backendHandlerInitializer;
-
-    public TcpProxyFrontHandler(TcpProxyServer server,
-                                ProxyChannelInitializer<SocketChannel, TcpProxyServer> backendHandlerInitializer) {
-        this.server = server;
-        this.remoteAddress = server.getRemoteAddress();
-        this.backendHandlerInitializer = backendHandlerInitializer;
+    /**
+     * 后置处理器
+     */
+    @Override
+    protected ProxyBackendHandler<TcpProxyConfig> newBackendHandler(TcpProxyConfig config, Channel inboundChannel) {
+        return new TcpProxyBackendHandler(config, inboundChannel);
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
-        final Channel inboundChannel = ctx.channel();
-        Bootstrap bootstrap = new Bootstrap();
-        bootstrap.group(inboundChannel.eventLoop())
-                .channel(inboundChannel.getClass())
-                .attr(ATTR_PROXY_NAME, inboundChannel.attr(ATTR_PROXY_NAME).get())
-                .attr(ATTR_FRONT_CHANNEL, inboundChannel)
-                .handler(new ChannelInitializer<SocketChannel>() {
-                    @Override
-                    protected void initChannel(SocketChannel ch) throws Exception {
-                        ch.pipeline().addLast(logHandler(new TcpProxyBackendHandler(inboundChannel)));
-                        if (backendHandlerInitializer != null) {
-                            backendHandlerInitializer.init(ch, server);
-                        }
-                    }
-                })
-                .option(ChannelOption.AUTO_READ, false);
+        log.info("channel is active: '{}'", ctx.channel().remoteAddress());
 
-        ChannelFuture future = bootstrap.connect(remoteAddress);
+        InetSocketAddress remoteAddress = config.getRemoteAddress();
+        Channel inboundChannel = ctx.channel();
+
+        ChannelFuture future = buildClientBootstrap(inboundChannel)
+                .connect(remoteAddress);
+
         outboundChannel = future.channel();
         future.addListener(logListener(f -> {
             if (f.isSuccess()) {
@@ -68,11 +60,9 @@ public class TcpProxyFrontHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelInactive(ChannelHandlerContext ctx) {
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         log.info("front channel is close: '{}'", ctx.channel().remoteAddress());
-        if (outboundChannel != null && outboundChannel.isActive()) {
-            outboundChannel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
-        }
+        super.channelInactive(ctx);
     }
 
     @Override
@@ -93,12 +83,9 @@ public class TcpProxyFrontHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         log.error("will close front connect: '{}', front handler cause exception:{}",
                 ctx.channel().remoteAddress(), cause);
-        Channel channel = ctx.channel();
-        if (channel.isActive()) {
-            channel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
-        }
+        super.exceptionCaught(ctx, cause);
     }
 }

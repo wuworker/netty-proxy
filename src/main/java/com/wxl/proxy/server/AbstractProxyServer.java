@@ -1,29 +1,23 @@
 package com.wxl.proxy.server;
 
 import com.wxl.proxy.common.ProxyChannelInitializer;
+import com.wxl.proxy.common.ProxyFrontHandler;
 import com.wxl.proxy.log.ServerLoggingHandler;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.socket.ServerSocketChannel;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import lombok.Getter;
 import org.springframework.util.Assert;
+
+import static com.wxl.proxy.server.ProxyServer.logHandler;
 
 /**
  * Create by wuxingle on 2019/8/23
  * 代理服务器基本框架
+ * 默认autoRead false
  */
-public abstract class AbstractProxyServer<S extends AbstractProxyServer<S>>
-        implements ProxyServer<S> {
-
-    @Getter
-    private final int bindPort;
-
-    private final String name;
+public abstract class AbstractProxyServer<T extends ProxyConfig> implements ProxyServer<T> {
 
     private final EventLoopGroup boosGroup;
 
@@ -33,25 +27,25 @@ public abstract class AbstractProxyServer<S extends AbstractProxyServer<S>>
 
     private Channel serverChannel;
 
-    private ProxyChannelInitializer<ServerSocketChannel, S> serverInitializer;
+    private ProxyChannelInitializer<ServerSocketChannel, T> serverInitializer;
 
-    private ProxyChannelInitializer<SocketChannel, S> frontInitializer;
+    private ProxyChannelInitializer<SocketChannel, T> frontInitializer;
 
-    protected ProxyChannelInitializer<SocketChannel, S> backendInitializer;
+    private ProxyChannelInitializer<SocketChannel, T> backendInitializer;
 
-    public AbstractProxyServer(String name, int bindPort, EventLoopGroup boosGroup,
+    protected T config;
+
+    public AbstractProxyServer(T config,
+                               EventLoopGroup boosGroup,
                                EventLoopGroup workGroup) {
-        Assert.hasText(name, "server name can not empty!");
         Assert.notNull(boosGroup, "boss event loop group can not null!");
         Assert.notNull(workGroup, "work event loop group can not null!");
-        this.name = name;
-        this.bindPort = bindPort;
+        this.config = config;
         this.boosGroup = boosGroup;
         this.workGroup = workGroup;
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public final void start() {
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
@@ -62,24 +56,25 @@ public abstract class AbstractProxyServer<S extends AbstractProxyServer<S>>
                         protected void initChannel(ServerSocketChannel ch) throws Exception {
                             initServerChannel(ch);
                             if (serverInitializer != null) {
-                                serverInitializer.init(ch, (S) AbstractProxyServer.this);
+                                serverInitializer.init(ch, config);
                             }
                         }
                     })
-                    .childAttr(ATTR_PROXY_NAME, name)
+                    .childAttr(ATTR_PROXY_NAME, config.getServerName())
+                    .childOption(ChannelOption.AUTO_READ, false)
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
                             initClientChannel(ch);
                             if (frontInitializer != null) {
-                                frontInitializer.init(ch, (S) AbstractProxyServer.this);
+                                frontInitializer.init(ch, config);
                             }
                         }
                     });
 
             configBootstrap(bootstrap);
 
-            ChannelFuture future = bootstrap.bind(bindPort).sync();
+            ChannelFuture future = bootstrap.bind(config.getBindPort()).sync();
             serverChannel = future.channel();
             running = true;
         } catch (Exception e) {
@@ -107,21 +102,21 @@ public abstract class AbstractProxyServer<S extends AbstractProxyServer<S>>
 
     @Override
     public String name() {
-        return name;
+        return config.getServerName();
     }
 
     @Override
-    public void setServerHandlerInitializer(ProxyChannelInitializer<ServerSocketChannel, S> initializer) {
+    public void setServerHandlerInitializer(ProxyChannelInitializer<ServerSocketChannel, T> initializer) {
         this.serverInitializer = initializer;
     }
 
     @Override
-    public void setFrontHandlerInitializer(ProxyChannelInitializer<SocketChannel, S> initializer) {
+    public void setFrontHandlerInitializer(ProxyChannelInitializer<SocketChannel, T> initializer) {
         this.frontInitializer = initializer;
     }
 
     @Override
-    public void setBackendHandlerInitializer(ProxyChannelInitializer<SocketChannel, S> initializer) {
+    public void setBackendHandlerInitializer(ProxyChannelInitializer<SocketChannel, T> initializer) {
         this.backendInitializer = initializer;
     }
 
@@ -136,13 +131,24 @@ public abstract class AbstractProxyServer<S extends AbstractProxyServer<S>>
      * server channel handler 初始化
      */
     protected void initServerChannel(ServerSocketChannel ch) throws Exception {
-        ch.pipeline().addLast(new ServerLoggingHandler(name));
+        ch.pipeline().addLast(new ServerLoggingHandler(config.getServerName()));
     }
 
     /**
      * client channel handler 初始化
      */
-    protected abstract void initClientChannel(SocketChannel ch) throws Exception;
+    protected void initClientChannel(SocketChannel ch) throws Exception {
+        //应用前置处理器
+        ProxyFrontHandler<T> frontHandler = newFrontHandler(config, backendInitializer);
+        if (frontHandler != null) {
+            ch.pipeline().addLast(frontHandler.getClass().getName(), logHandler(frontHandler));
+        }
+    }
 
+    /**
+     * 前置处理器
+     */
+    protected abstract ProxyFrontHandler<T> newFrontHandler(
+            T config, ProxyChannelInitializer<SocketChannel, T> backendInitializer);
 
 }

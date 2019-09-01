@@ -1,10 +1,8 @@
 package com.wxl.proxy.tcp;
 
-import io.netty.buffer.Unpooled;
+import com.wxl.proxy.common.ProxyBackendHandler;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -12,47 +10,28 @@ import lombok.extern.slf4j.Slf4j;
  * 代理后端处理
  */
 @Slf4j
-public class TcpProxyBackendHandler extends ChannelInboundHandlerAdapter {
+public class TcpProxyBackendHandler extends ProxyBackendHandler<TcpProxyConfig> {
 
-    private final Channel inboundChannel;
-
-    public TcpProxyBackendHandler(Channel inboundChannel) {
-        this.inboundChannel = inboundChannel;
+    public TcpProxyBackendHandler(TcpProxyConfig config, Channel inboundChannel) {
+        super(config, inboundChannel);
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) {
-        ctx.read();
-    }
-
-    @Override
-    public void channelInactive(ChannelHandlerContext ctx) {
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         log.info("backend channel is close: '{}'", ctx.channel().remoteAddress());
-        if (inboundChannel.isActive()) {
-            inboundChannel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
-        }
+        super.channelInactive(ctx);
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        inboundChannel.writeAndFlush(msg).addListener((ChannelFutureListener) f -> {
-            if (f.isSuccess()) {
-                ctx.channel().read();
-            } else {
-                log.error("write to front error", f.cause());
-                f.channel().close();
-            }
-        });
-    }
-
-    @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         log.error("will close backend connect: '{}', backend handler cause exception:{}",
                 ctx.channel().remoteAddress(), cause);
-        Channel channel = ctx.channel();
-        if (channel.isActive()) {
-            channel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
-        }
+        super.exceptionCaught(ctx, cause);
     }
 
+    @Override
+    protected void forwardDataFail(Channel channel, Throwable cause) throws Exception {
+        log.error("write to front error", cause);
+        super.forwardDataFail(channel, cause);
+    }
 }

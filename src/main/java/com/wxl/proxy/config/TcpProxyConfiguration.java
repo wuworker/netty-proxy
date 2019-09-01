@@ -2,8 +2,8 @@ package com.wxl.proxy.config;
 
 import com.wxl.proxy.properties.TcpProxyProperties;
 import com.wxl.proxy.properties.TcpProxyServerProperties;
+import com.wxl.proxy.tcp.TcpProxyConfig;
 import com.wxl.proxy.tcp.TcpProxyServer;
-import com.wxl.proxy.tcp.TcpProxyServerBuilder;
 import com.wxl.proxy.tcp.TcpProxyServerManager;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -33,18 +33,17 @@ public class TcpProxyConfiguration {
 
         TcpProxyServerManager serverManager = new TcpProxyServerManager(bossThreads, workThreads);
 
-        TcpProxyServerBuilder builder = new TcpProxyServerBuilder();
         for (Map.Entry<String, TcpProxyServerProperties> entry : tcpProxyProperties.getServer().entrySet()) {
             String key = entry.getKey();
             TcpProxyServerProperties prop = entry.getValue();
 
-            TcpProxyServer server = builder.name(key)
-                    .bindPort(prop.getBindPort())
-                    .remoteAddress(new InetSocketAddress(prop.getRemoteHost(), prop.getRemotePort()))
-                    .bossGroup(serverManager.getBossGroup())
-                    .workGroup(serverManager.getWorkGroup())
-                    .build();
-            serverManager.addLast(server);
+            TcpProxyConfig config = new TcpProxyConfig();
+            config.setServerName(key);
+            config.setBindPort(prop.getBindPort());
+            config.setRemoteAddress(new InetSocketAddress(prop.getRemoteHost(), prop.getRemotePort()));
+
+            serverManager.addLast(new TcpProxyServer(config,
+                    serverManager.getBossGroup(), serverManager.getWorkGroup()));
         }
         return serverManager;
     }

@@ -17,8 +17,7 @@ import org.springframework.context.Lifecycle;
  * Create by wuxingle on 2019/8/23
  * 代理服务器
  */
-public interface ProxyServer<S extends ProxyServer<S>>
-        extends Lifecycle {
+public interface ProxyServer<T extends ProxyConfig> extends Lifecycle {
 
     boolean LOG_CONNECT_ID = SystemPropertyUtil.getBoolean(
             "proxy.log.connectId", true);
@@ -33,17 +32,17 @@ public interface ProxyServer<S extends ProxyServer<S>>
     /**
      * serverChannel初始化
      */
-    void setServerHandlerInitializer(ProxyChannelInitializer<ServerSocketChannel, S> initializer);
+    void setServerHandlerInitializer(ProxyChannelInitializer<ServerSocketChannel, T> initializer);
 
     /**
      * 代理前端channel初始化
      */
-    void setFrontHandlerInitializer(ProxyChannelInitializer<SocketChannel, S> initializer);
+    void setFrontHandlerInitializer(ProxyChannelInitializer<SocketChannel, T> initializer);
 
     /**
      * 代理后端channel初始化
      */
-    void setBackendHandlerInitializer(ProxyChannelInitializer<SocketChannel, S> initializer);
+    void setBackendHandlerInitializer(ProxyChannelInitializer<SocketChannel, T> initializer);
 
 
     /**
