@@ -37,7 +37,7 @@ public class TcpProxyServer extends AbstractProxyServer<TcpProxyServer> {
     @Override
     protected void initClientChannel(SocketChannel ch) {
         ch.pipeline().addLast(PROXY_HANDLER,
-                ProxyServer.logEnhance(new TcpProxyFrontHandler(this, backendInitializer)));
+                ProxyServer.logHandler(new TcpProxyFrontHandler(this, backendInitializer)));
     }
 
     /**

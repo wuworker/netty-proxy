@@ -1,7 +1,6 @@
 package com.wxl.proxy.tcp;
 
 import com.wxl.proxy.common.ProxyChannelInitializer;
-import com.wxl.proxy.log.LoggingChannelFutureListener;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
@@ -46,7 +45,7 @@ public class TcpProxyFrontHandler extends ChannelInboundHandlerAdapter {
                 .handler(new ChannelInitializer<SocketChannel>() {
                     @Override
                     protected void initChannel(SocketChannel ch) throws Exception {
-                        ch.pipeline().addLast(logEnhance(new TcpProxyBackendHandler(inboundChannel)));
+                        ch.pipeline().addLast(logHandler(new TcpProxyBackendHandler(inboundChannel)));
                         if (backendHandlerInitializer != null) {
                             backendHandlerInitializer.init(ch, server);
                         }
@@ -56,20 +55,21 @@ public class TcpProxyFrontHandler extends ChannelInboundHandlerAdapter {
 
         ChannelFuture future = bootstrap.connect(remoteAddress);
         outboundChannel = future.channel();
-        future.addListener((LoggingChannelFutureListener) f -> {
+        future.addListener(logListener(f -> {
             if (f.isSuccess()) {
-                log.info("remote host '{}' connect success", remoteAddress);
+                log.info("remote '{}' connect success", remoteAddress);
                 inboundChannel.read();
             } else {
-                log.info("remote host '{}' connect fail! {}", remoteAddress, f.cause());
+                log.info("remote '{}' connect fail! {}", remoteAddress, f.cause());
                 inboundChannel.close();
             }
-        });
+        }));
+        inboundChannel.attr(ATTR_BACKEND_CHANNEL).set(outboundChannel);
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
-        log.info("tcp proxy server to client channel is close:{}", ctx.channel().remoteAddress());
+        log.info("front channel is close: '{}'", ctx.channel().remoteAddress());
         if (outboundChannel != null && outboundChannel.isActive()) {
             outboundChannel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
         }
@@ -82,7 +82,7 @@ public class TcpProxyFrontHandler extends ChannelInboundHandlerAdapter {
                 if (f.isSuccess()) {
                     ctx.channel().read();
                 } else {
-                    log.error("write to outbound error", f.cause());
+                    log.error("write to backend error", f.cause());
                     f.channel().close();
                 }
             });
@@ -94,7 +94,7 @@ public class TcpProxyFrontHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        log.error("tcp proxy server will close client connect:{}, front handler cause exception:{}",
+        log.error("will close front connect: '{}', front handler cause exception:{}",
                 ctx.channel().remoteAddress(), cause);
         Channel channel = ctx.channel();
         if (channel.isActive()) {

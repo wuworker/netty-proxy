@@ -2,11 +2,14 @@ package com.wxl.proxy.server;
 
 import com.wxl.proxy.common.ProxyChannelInitializer;
 import com.wxl.proxy.log.ChannelHandlerLogEnhance;
+import com.wxl.proxy.log.LoggingChannelFutureListener;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.socket.ServerSocketChannel;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.util.AttributeKey;
+import io.netty.util.internal.SystemPropertyUtil;
 import org.springframework.context.Lifecycle;
 
 
@@ -17,9 +20,13 @@ import org.springframework.context.Lifecycle;
 public interface ProxyServer<S extends ProxyServer<S>>
         extends Lifecycle {
 
+    boolean LOG_CONNECT_ID = SystemPropertyUtil.getBoolean(
+            "proxy.log.connectId", true);
+
     AttributeKey<String> ATTR_CONNECT_ID = AttributeKey.valueOf("connectId");
     AttributeKey<String> ATTR_PROXY_NAME = AttributeKey.valueOf("proxyName");
     AttributeKey<Channel> ATTR_FRONT_CHANNEL = AttributeKey.valueOf("frontChannel");
+    AttributeKey<Channel> ATTR_BACKEND_CHANNEL = AttributeKey.valueOf("backendChannel");
 
     String name();
 
@@ -40,20 +47,35 @@ public interface ProxyServer<S extends ProxyServer<S>>
 
 
     /**
-     * 日志增强
+     * handler增加connectId日志
      */
     @SuppressWarnings("unchecked")
-    static <T extends ChannelHandler> T logEnhance(T handler) {
+    static <T extends ChannelHandler> T logHandler(T handler) {
+        if (!LOG_CONNECT_ID) {
+            return handler;
+        }
         return (T) ChannelHandlerLogEnhance.adapter(handler);
     }
 
     /**
-     * 日志增强
+     * handler增加connectId日志
      */
-    static <T extends ChannelHandler> T logEnhanceSharable(T handler) {
+    static <T extends ChannelHandler> T logSharableHandler(T handler) {
+        if (!LOG_CONNECT_ID) {
+            return handler;
+        }
         return ChannelHandlerLogEnhance.proxy(handler);
     }
 
+    /**
+     * listener增加connectId日志
+     */
+    static ChannelFutureListener logListener(ChannelFutureListener listener) {
+        if (!LOG_CONNECT_ID) {
+            return listener;
+        }
+        return (LoggingChannelFutureListener) listener::operationComplete;
+    }
 }
 
 

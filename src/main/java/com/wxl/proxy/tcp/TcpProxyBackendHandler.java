@@ -27,7 +27,7 @@ public class TcpProxyBackendHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
-        log.info("tcp proxy server to remote host channel is close:{}", ctx.channel().remoteAddress());
+        log.info("backend channel is close: '{}'", ctx.channel().remoteAddress());
         if (inboundChannel.isActive()) {
             inboundChannel.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
         }
@@ -39,7 +39,7 @@ public class TcpProxyBackendHandler extends ChannelInboundHandlerAdapter {
             if (f.isSuccess()) {
                 ctx.channel().read();
             } else {
-                log.error("write to inbound error", f.cause());
+                log.error("write to front error", f.cause());
                 f.channel().close();
             }
         });
@@ -47,7 +47,7 @@ public class TcpProxyBackendHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        log.error("tcp proxy server will close remote host connect:{}, backend handler cause exception:{}",
+        log.error("will close backend connect: '{}', backend handler cause exception:{}",
                 ctx.channel().remoteAddress(), cause);
         Channel channel = ctx.channel();
         if (channel.isActive()) {

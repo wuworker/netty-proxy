@@ -28,9 +28,6 @@ public abstract class ChannelHandlerLogEnhance {
      */
     @SuppressWarnings("unchecked")
     public static <T extends ChannelHandler> T proxy(ClassLoader loader, T handler) {
-        if (!MDCUtils.LOG_CONNECT_ID) {
-            return handler;
-        }
         return (T) Proxy.newProxyInstance(loader, new Class[]{
                 ChannelInboundHandler.class,
                 ChannelOutboundHandler.class
@@ -38,9 +35,6 @@ public abstract class ChannelHandlerLogEnhance {
     }
 
     public static <T extends ChannelHandler> T proxy(T handler) {
-        if (!MDCUtils.LOG_CONNECT_ID) {
-            return handler;
-        }
         return proxy(ChannelHandlerLogEnhance.class.getClassLoader(), handler);
     }
 
@@ -48,9 +42,6 @@ public abstract class ChannelHandlerLogEnhance {
      * 适配器增强
      */
     public static ChannelInboundHandler adapter(ChannelInboundHandler handler) {
-        if (!MDCUtils.LOG_CONNECT_ID) {
-            return handler;
-        }
         if (handler instanceof ChannelOutboundHandler) {
             return (ChannelInboundHandler) adapter((ChannelHandler) handler);
         }
@@ -62,9 +53,6 @@ public abstract class ChannelHandlerLogEnhance {
     }
 
     public static ChannelOutboundHandler adapter(ChannelOutboundHandler handler) {
-        if (!MDCUtils.LOG_CONNECT_ID) {
-            return handler;
-        }
         if (handler instanceof ChannelInboundHandler) {
             return (ChannelOutboundHandler) adapter((ChannelHandler) handler);
         }
@@ -77,9 +65,6 @@ public abstract class ChannelHandlerLogEnhance {
 
 
     public static ChannelHandler adapter(ChannelHandler handler) {
-        if (!MDCUtils.LOG_CONNECT_ID) {
-            return handler;
-        }
         if (handler instanceof ChannelDuplexLogAdapter) {
             return handler;
         }
