@@ -1,5 +1,6 @@
 package com.wxl.proxy.common;
 
+import com.wxl.proxy.server.ProxyConfig;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
@@ -12,7 +13,7 @@ import static com.wxl.proxy.server.ProxyServer.logListener;
  * Create by wuxingle on 2019/9/1
  * 代理后置处理
  */
-public abstract class ProxyBackendHandler<T> extends ChannelInboundHandlerAdapter {
+public abstract class ProxyBackendHandler<T extends ProxyConfig> extends ChannelInboundHandlerAdapter {
 
     protected Channel inboundChannel;
 

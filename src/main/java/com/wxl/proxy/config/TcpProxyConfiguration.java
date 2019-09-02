@@ -1,53 +1,66 @@
 package com.wxl.proxy.config;
 
+import com.wxl.proxy.properties.ProxyProperties;
 import com.wxl.proxy.properties.TcpProxyProperties;
-import com.wxl.proxy.properties.TcpProxyServerProperties;
+import com.wxl.proxy.properties.TcpProxyProperties.TcpServerProperties;
+import com.wxl.proxy.server.EventLoopGroupManager;
 import com.wxl.proxy.tcp.TcpProxyConfig;
 import com.wxl.proxy.tcp.TcpProxyServer;
 import com.wxl.proxy.tcp.TcpProxyServerManager;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.net.InetSocketAddress;
+import java.time.Duration;
 import java.util.Map;
 
 /**
  * Create by wuxingle on 2019/8/17
  * tcp隧道代理配置
  */
+@Slf4j
 @Configuration
-@EnableConfigurationProperties(TcpProxyProperties.class)
+@EnableConfigurationProperties({ProxyProperties.class, TcpProxyProperties.class})
 public class TcpProxyConfiguration {
 
-    private final TcpProxyProperties tcpProxyProperties;
+    private final ProxyProperties proxyProperties;
 
-    public TcpProxyConfiguration(TcpProxyProperties tcpProxyProperties) {
-        this.tcpProxyProperties = tcpProxyProperties;
+    private final TcpProxyProperties tcpProperties;
+
+    public TcpProxyConfiguration(ProxyProperties proxyProperties,
+                                 TcpProxyProperties tcpProxyProperties) {
+        this.proxyProperties = proxyProperties;
+        this.tcpProperties = tcpProxyProperties;
     }
 
     @Bean
-    public TcpProxyServerManager tcpProxyServerManager() {
-        int bossThreads = tcpProxyProperties.getBossThreads();
-        int workThreads = tcpProxyProperties.getWorkThreads();
+    public TcpProxyServerManager tcpProxyServerManager(EventLoopGroupManager groupManager) {
+        TcpProxyServerManager serverManager = new TcpProxyServerManager();
 
-        TcpProxyServerManager serverManager = new TcpProxyServerManager(bossThreads, workThreads);
+        Duration connectTimeout = tcpProperties.getConnectTimeout();
+        if (connectTimeout == null) {
+            connectTimeout = proxyProperties.getConnectTimeout();
+        }
 
-        for (Map.Entry<String, TcpProxyServerProperties> entry : tcpProxyProperties.getServer().entrySet()) {
+        for (Map.Entry<String, TcpServerProperties> entry : tcpProperties.getServer().entrySet()) {
             String key = entry.getKey();
-            TcpProxyServerProperties prop = entry.getValue();
+            TcpServerProperties prop = entry.getValue();
 
-            TcpProxyConfig config = new TcpProxyConfig();
-            config.setServerName(key);
-            config.setBindPort(prop.getBindPort());
-            config.setRemoteAddress(new InetSocketAddress(prop.getRemoteHost(), prop.getRemotePort()));
+            TcpProxyConfig config = TcpProxyConfig.builder()
+                    .serverName(key)
+                    .bindPort(prop.getBindPort())
+                    .remoteAddress(new InetSocketAddress(prop.getRemoteHost(), prop.getRemotePort()))
+                    .connectTimeout(prop.getConnectTimeout() == null ? connectTimeout : prop.getConnectTimeout())
+                    .build();
 
+            log.debug("tcp proxy use config:{}", config);
             serverManager.addLast(new TcpProxyServer(config,
-                    serverManager.getBossGroup(), serverManager.getWorkGroup()));
+                    groupManager.getBossGroup(), groupManager.getWorkGroup()));
         }
         return serverManager;
     }
 
 }
-
 

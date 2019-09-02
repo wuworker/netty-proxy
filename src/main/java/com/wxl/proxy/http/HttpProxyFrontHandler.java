@@ -70,6 +70,14 @@ public class HttpProxyFrontHandler extends ProxyFrontHandler<HttpProxyConfig> {
     }
 
     @Override
+    protected void initChannelHandler(SocketChannel ch, Channel inboundChannel) throws Exception {
+        super.initChannelHandler(ch, inboundChannel);
+        if (!isHttps) {
+            ch.pipeline().addFirst(HttpClientCodec.class.getName(), new HttpClientCodec());
+        }
+    }
+
+    @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         ctx.read();
         log.debug("channel is active: '{}'", ctx.channel().remoteAddress());
@@ -171,7 +179,7 @@ public class HttpProxyFrontHandler extends ProxyFrontHandler<HttpProxyConfig> {
                                 if (f2.isSuccess()) {
                                     log.debug("https tunnel build success");
                                     // https不解析
-                                    f2.channel().pipeline().remove(HttpProxyServer.class.getName());
+                                    f2.channel().pipeline().remove(HttpServerCodec.class.getName());
                                     f2.channel().read();
                                 } else {
                                     log.error("https tunnel build fail(write response fail)", f2.cause());
@@ -222,7 +230,6 @@ public class HttpProxyFrontHandler extends ProxyFrontHandler<HttpProxyConfig> {
      */
     private void doConnect(Channel inboundChannel, GenericFutureListener<? extends Future<? super Void>> connectListener) {
         ChannelFuture future = buildClientBootstrap(inboundChannel)
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
                 .connect(host, port);
 
         outboundChannel = future.channel();
@@ -236,7 +243,7 @@ public class HttpProxyFrontHandler extends ProxyFrontHandler<HttpProxyConfig> {
      */
     private void forwardData(Channel inboundChannel, Object msg) {
         log.debug("forward data:{}", msg);
-        if (outboundChannel.isActive()) {
+        if (outboundChannel != null && outboundChannel.isActive()) {
             outboundChannel.writeAndFlush(msg)
                     .addListener(logListener(f -> {
                         if (f.isSuccess()) {

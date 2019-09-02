@@ -1,5 +1,6 @@
 package com.wxl.proxy.common;
 
+import com.wxl.proxy.server.ProxyConfig;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
@@ -11,7 +12,7 @@ import static com.wxl.proxy.server.ProxyServer.*;
  * Create by wuxingle on 2019/9/1
  * 代理前置处理
  */
-public abstract class ProxyFrontHandler<T> extends ChannelInboundHandlerAdapter {
+public abstract class ProxyFrontHandler<T extends ProxyConfig> extends ChannelInboundHandlerAdapter {
 
     protected Channel outboundChannel;
 
@@ -58,6 +59,10 @@ public abstract class ProxyFrontHandler<T> extends ChannelInboundHandlerAdapter 
                 .attr(ATTR_PROXY_NAME, inboundChannel.attr(ATTR_PROXY_NAME).get())
                 .attr(ATTR_FRONT_CHANNEL, inboundChannel)
                 .option(ChannelOption.AUTO_READ, false);
+        if (config.getConnectTimeout() != null) {
+            bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) config.getConnectTimeout().toMillis());
+        }
+
         return bootstrap;
     }
 

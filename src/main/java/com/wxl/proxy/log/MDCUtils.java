@@ -17,6 +17,16 @@ class MDCUtils {
 
     private static final String CONNECT_ID = "connectId";
 
+    static void logServerConnectId(String name, CheckRunnable runnable)
+            throws Exception {
+        try {
+            MDC.put(CONNECT_ID, name);
+            runnable.run();
+        } finally {
+            MDC.remove(CONNECT_ID);
+        }
+    }
+
     /**
      * 记录当前连接id到log
      */
@@ -27,25 +37,33 @@ class MDCUtils {
 
     static void logConnectId(Channel channel, CheckRunnable runnable)
             throws Exception {
+        boolean flag = true;
         try {
-            putConnectId(channel);
+            flag = putConnectId(channel);
             runnable.run();
         } finally {
-            removeConnectId();
+            if (flag) {
+                removeConnectId();
+            }
         }
     }
 
-    static void putConnectId(ChannelHandlerContext ctx) {
-        putConnectId(ctx.channel());
+    static boolean putConnectId(ChannelHandlerContext ctx) {
+        return putConnectId(ctx.channel());
     }
 
     /**
      * connectId组成
      * name-frontChannelId-backendChannelId
      */
-    static void putConnectId(Channel channel) {
+    static boolean putConnectId(Channel channel) {
+        String connectId = MDC.get(CONNECT_ID);
+        if (connectId != null) {
+            return false;
+        }
+
         Attribute<String> connectIdAttr = channel.attr(ATTR_CONNECT_ID);
-        String connectId = connectIdAttr.get();
+        connectId = connectIdAttr.get();
         if (connectId == null) {
             StringBuilder sb = new StringBuilder();
             //name
@@ -65,6 +83,7 @@ class MDCUtils {
         }
 
         MDC.put(CONNECT_ID, connectId);
+        return true;
     }
 
     static void removeConnectId() {

@@ -1,8 +1,5 @@
 package com.wxl.proxy.tcp;
 
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.SmartLifecycle;
 
@@ -18,17 +15,6 @@ public class TcpProxyServerManager implements SmartLifecycle {
 
     private List<TcpProxyServer> servers = new ArrayList<>();
 
-    @Getter
-    private EventLoopGroup bossGroup;
-
-    @Getter
-    private EventLoopGroup workGroup;
-
-    public TcpProxyServerManager(int bossThreads, int workThreads) {
-        this.bossGroup = new NioEventLoopGroup(bossThreads);
-        this.workGroup = new NioEventLoopGroup(workThreads);
-    }
-
     public TcpProxyServerManager addLast(TcpProxyServer server) {
         servers.add(server);
         return this;
@@ -42,26 +28,21 @@ public class TcpProxyServerManager implements SmartLifecycle {
                     server.start();
                 }
             } catch (Throwable e) {
-                log.error("server {} start is error", e);
+                log.error("server {} start is error", server.name(), e);
             }
         }
     }
 
     @Override
     public void stop() {
-        try {
-            for (TcpProxyServer server : servers) {
-                try {
-                    if (server.isRunning()) {
-                        server.stop();
-                    }
-                } catch (Throwable e) {
-                    log.error("server {} stop is error", server.name(), e);
+        for (TcpProxyServer server : servers) {
+            try {
+                if (server.isRunning()) {
+                    server.stop();
                 }
+            } catch (Throwable e) {
+                log.error("server {} stop is error", server.name(), e);
             }
-        } finally {
-            bossGroup.shutdownGracefully();
-            workGroup.shutdownGracefully();
         }
     }
 

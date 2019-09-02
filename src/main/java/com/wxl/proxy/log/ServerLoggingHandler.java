@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.net.SocketAddress;
 
+import static com.wxl.proxy.log.MDCUtils.logServerConnectId;
+
 /**
  * Create by wuxingle on 2019/8/17
  * server log handler
@@ -24,20 +26,26 @@ public class ServerLoggingHandler extends ChannelDuplexHandler {
 
     @Override
     public void bind(ChannelHandlerContext ctx, SocketAddress localAddress, ChannelPromise promise) throws Exception {
-        log.info("{} bind success:{}", name, localAddress);
-        super.bind(ctx, localAddress, promise);
+        logServerConnectId(name, () -> {
+            log.info("{} bind success:{}", name, localAddress);
+            super.bind(ctx, localAddress, promise);
+        });
     }
 
     @Override
     public void close(ChannelHandlerContext ctx, ChannelPromise promise) throws Exception {
-        log.info("{} close", name);
-        super.close(ctx, promise);
+        logServerConnectId(name, () -> {
+            log.info("{} close", name);
+            super.close(ctx, promise);
+        });
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        log.info("{} is active", name);
-        super.channelActive(ctx);
+        logServerConnectId(name, () -> {
+            log.info("{} is active", name);
+            super.channelActive(ctx);
+        });
     }
 
     @Override

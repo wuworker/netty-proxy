@@ -311,11 +311,14 @@ public abstract class ChannelHandlerLogEnhance {
             // 第一个参数必定是ChannelHandlerContext
             ChannelHandlerContext ctx = (ChannelHandlerContext) args[0];
 
+            boolean flag = true;
             try {
-                putConnectId(ctx);
+                flag = putConnectId(ctx);
                 return method.invoke(channelHandler, args);
             } finally {
-                removeConnectId();
+                if (flag) {
+                    removeConnectId();
+                }
             }
         }
 
