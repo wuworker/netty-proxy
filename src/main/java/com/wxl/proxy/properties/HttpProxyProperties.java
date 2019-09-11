@@ -1,5 +1,6 @@
 package com.wxl.proxy.properties;
 
+import com.wxl.proxy.http.proxy.SecondProxyType;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -20,4 +21,22 @@ public class HttpProxyProperties {
     private int bindPort;
 
     private Duration connectTimeout;
+
+    private SecondProxyProperties secondProxy = new SecondProxyProperties();
+
+    @Data
+    public static class SecondProxyProperties {
+
+        private SecondProxyType type;
+
+        private String host;
+
+        private int port;
+
+        private String username;
+
+        private String password;
+
+    }
+
 }

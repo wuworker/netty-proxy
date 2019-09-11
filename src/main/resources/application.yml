@@ -19,11 +19,16 @@ proxy:
         bind-port: 9999
         remote-host: localhost
         remote-port: 3306
+      redis-proxy:
+        bind-port: 9998
+        remote-host: localhost
+        remote-port: 6379
   http:
     bind-port: 8888
     connect-timeout: 5s
-#      redis-proxy:
-#        bind-port: 9998
-#        remote-host: localhost
-#        remote-port: 6379
+    second-proxy:
+      host: localhost
+      port: 1080
+      type: socks5
+
 

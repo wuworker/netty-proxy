@@ -7,9 +7,13 @@ import com.wxl.proxy.http.interceptor.HttpProxyInterceptor;
 import com.wxl.proxy.http.interceptor.HttpProxyInterceptorAdapter;
 import com.wxl.proxy.http.interceptor.HttpProxyInterceptorInitializer;
 import com.wxl.proxy.http.interceptor.HttpProxyInterceptorPipeline;
+import com.wxl.proxy.http.proxy.SecondProxyHandlers;
+import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.*;
+import io.netty.handler.proxy.ProxyHandler;
+import io.netty.resolver.NoopAddressResolverGroup;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
@@ -22,8 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.wxl.proxy.server.ProxyServer.logListener;
-import static io.netty.handler.codec.http.HttpResponseStatus.BAD_GATEWAY;
-import static io.netty.handler.codec.http.HttpResponseStatus.GATEWAY_TIMEOUT;
+import static io.netty.handler.codec.http.HttpResponseStatus.*;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 /**
@@ -74,6 +77,11 @@ public class HttpProxyFrontHandler extends ProxyFrontHandler<HttpProxyConfig> {
         super.initChannelHandler(ch, inboundChannel);
         if (!isHttps) {
             ch.pipeline().addFirst(HttpClientCodec.class.getName(), new HttpClientCodec());
+        }
+        //二级代理
+        if (config.getSecondProxy() != null) {
+            ch.pipeline().addFirst(ProxyHandler.class.getName(),
+                    SecondProxyHandlers.newProxyHandler(config.getSecondProxy()));
         }
     }
 
@@ -148,7 +156,7 @@ public class HttpProxyFrontHandler extends ProxyFrontHandler<HttpProxyConfig> {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        log.error("will close front connect '{}:{}', front handler cause exception:{}",
+        log.error("will close front connect '{}:{}', front handler cause exception",
                 host, port, cause);
         super.exceptionCaught(ctx, cause);
     }
@@ -188,7 +196,7 @@ public class HttpProxyFrontHandler extends ProxyFrontHandler<HttpProxyConfig> {
                             }));
                 } else {
                     Throwable cause = f.cause();
-                    log.warn("https connect fail! {}:{} by:{}", host, port, cause);
+                    log.warn("https connect fail! {}:{} by:{}", host, port, cause.getMessage());
                     HttpResponse response;
                     if (cause instanceof ConnectTimeoutException) {
                         response = new DefaultFullHttpResponse(HTTP_1_1, GATEWAY_TIMEOUT);
@@ -229,8 +237,12 @@ public class HttpProxyFrontHandler extends ProxyFrontHandler<HttpProxyConfig> {
      * 建立远程连接
      */
     private void doConnect(Channel inboundChannel, GenericFutureListener<? extends Future<? super Void>> connectListener) {
-        ChannelFuture future = buildClientBootstrap(inboundChannel)
-                .connect(host, port);
+        Bootstrap bootstrap = buildClientBootstrap(inboundChannel);
+        if (config.getSecondProxy() != null) {
+            //交给二级代理解析域名
+            bootstrap.resolver(NoopAddressResolverGroup.INSTANCE);
+        }
+        ChannelFuture future = bootstrap.connect(host, port);
 
         outboundChannel = future.channel();
         if (connectListener != null) {
@@ -290,6 +302,18 @@ public class HttpProxyFrontHandler extends ProxyFrontHandler<HttpProxyConfig> {
             public void afterResponse(Channel inboundChannel, Channel outboundChannel, HttpObject response, HttpProxyInterceptorPipeline pipeline) {
                 inboundChannel.writeAndFlush(response).addListener(logListener(f -> {
                     if (f.isSuccess()) {
+                        if (response instanceof HttpResponse) {
+                            HttpResponse httpResponse = ((HttpResponse) response);
+                            // 协议升级
+                            if (httpResponse.status() == SWITCHING_PROTOCOLS) {
+                                String upgrade = httpResponse.headers().get(HttpHeaderNames.UPGRADE);
+                                log.debug("switch protocols to: {}", upgrade);
+
+                                inboundChannel.pipeline().remove(HttpServerCodec.class.getName());
+                                outboundChannel.pipeline().remove(HttpClientCodec.class.getName());
+                            }
+                        }
+
                         outboundChannel.read();
                     } else {
                         log.error("inbound write fail", f.cause());
@@ -313,7 +337,7 @@ public class HttpProxyFrontHandler extends ProxyFrontHandler<HttpProxyConfig> {
             int i;
             if ((i = hostStr.lastIndexOf(":")) > 0) {
                 host = hostStr.substring(0, i);
-                port = Integer.parseInt(hostStr.substring(i + 1, hostStr.length()));
+                port = Integer.parseInt(hostStr.substring(i + 1));
             } else {
                 host = hostStr;
             }
