@@ -9,7 +9,6 @@ import org.springframework.core.Ordered;
  */
 public interface ProxyChannelInitializer<C extends Channel, T> extends Ordered {
 
-
     void init(C channel, T config) throws Exception;
 
     @Override

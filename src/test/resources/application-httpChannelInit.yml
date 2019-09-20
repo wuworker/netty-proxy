@@ -1,0 +1,7 @@
+proxy:
+  boss-threads: 0
+  work-threads: 0
+  http:
+    bind-port: 8888
+    connect-timeout: 5s
+

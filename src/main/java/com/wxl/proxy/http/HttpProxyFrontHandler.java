@@ -324,7 +324,9 @@ public class HttpProxyFrontHandler extends ProxyFrontHandler<HttpProxyConfig> {
         };
 
         HttpProxyInterceptorPipeline pipeline = new HttpProxyInterceptorPipeline(head, tail);
-        interceptorInitializer.init(pipeline);
+        if (interceptorInitializer != null) {
+            interceptorInitializer.init(pipeline);
+        }
         return pipeline;
     }
 

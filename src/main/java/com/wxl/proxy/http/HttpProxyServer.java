@@ -4,18 +4,11 @@ import com.wxl.proxy.common.ProxyChannelInitializer;
 import com.wxl.proxy.common.ProxyFrontHandler;
 import com.wxl.proxy.http.interceptor.HttpProxyInterceptorInitializer;
 import com.wxl.proxy.server.AbstractProxyServer;
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpServerCodec;
-import io.netty.util.CharsetUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.SmartLifecycle;
-
-import java.nio.charset.Charset;
 
 /**
  * Create by wuxingle on 2019/9/1
@@ -24,14 +17,17 @@ import java.nio.charset.Charset;
 @Slf4j
 public class HttpProxyServer extends AbstractProxyServer<HttpProxyConfig> implements SmartLifecycle {
 
-    private HttpProxyInterceptorInitializer interceptorInitializer = pipeline -> {
-    };
+    private HttpProxyInterceptorInitializer interceptorInitializer;
 
     public HttpProxyServer(HttpProxyConfig config,
                            EventLoopGroup boosGroup,
                            EventLoopGroup workGroup) {
         super(config, boosGroup, workGroup);
         this.config = config;
+    }
+
+    public void setInterceptorInitializer(HttpProxyInterceptorInitializer interceptorInitializer) {
+        this.interceptorInitializer = interceptorInitializer;
     }
 
     /**

@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
     <springProperty scope="context" name="level" source="logging.level.root" defaultValue="info"/>
-    <springProperty scope="context" name="path" source="logging.path" defaultValue="logs"/>
     <springProperty scope="context" name="appName" source="spring.application.name" defaultValue="default"/>
     <springProperty scope="context" name="consolePattern" source="logging.pattern.console"
                     defaultValue="${CONSOLE_LOG_PATTERN:-%clr(%d{${LOG_DATEFORMAT_PATTERN:-yyyy-MM-dd HH:mm:ss.SSS}}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr(---){faint} %clr([%15.15t]){faint}[%X{connectId}] %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>

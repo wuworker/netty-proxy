@@ -1,5 +1,9 @@
 package com.wxl.proxy.config;
 
+import com.wxl.proxy.common.BackendChannelInitializer;
+import com.wxl.proxy.common.ComposeChannelInitializer;
+import com.wxl.proxy.common.FrontChannelInitializer;
+import com.wxl.proxy.common.ServerChannelInitializer;
 import com.wxl.proxy.properties.ProxyProperties;
 import com.wxl.proxy.properties.TcpProxyProperties;
 import com.wxl.proxy.properties.TcpProxyProperties.TcpServerProperties;
@@ -8,6 +12,7 @@ import com.wxl.proxy.tcp.TcpProxyConfig;
 import com.wxl.proxy.tcp.TcpProxyServer;
 import com.wxl.proxy.tcp.TcpProxyServerManager;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,7 +41,10 @@ public class TcpProxyConfiguration {
     }
 
     @Bean
-    public TcpProxyServerManager tcpProxyServerManager(EventLoopGroupManager groupManager) {
+    public TcpProxyServerManager tcpProxyServerManager(EventLoopGroupManager groupManager,
+                                                       ObjectProvider<ServerChannelInitializer<TcpProxyConfig>> serverChannelInitializers,
+                                                       ObjectProvider<FrontChannelInitializer<TcpProxyConfig>> frontChannelInitializers,
+                                                       ObjectProvider<BackendChannelInitializer<TcpProxyConfig>> backendChannelInitializers) {
         TcpProxyServerManager serverManager = new TcpProxyServerManager();
 
         Duration connectTimeout = tcpProperties.getConnectTimeout();
@@ -56,8 +64,12 @@ public class TcpProxyConfiguration {
                     .build();
 
             log.debug("tcp proxy use config:{}", config);
-            serverManager.addLast(new TcpProxyServer(config,
-                    groupManager.getBossGroup(), groupManager.getWorkGroup()));
+            TcpProxyServer tcpProxyServer = new TcpProxyServer(config, groupManager.getBossGroup(), groupManager.getWorkGroup());
+            tcpProxyServer.setServerHandlerInitializer(new ComposeChannelInitializer<>(serverChannelInitializers));
+            tcpProxyServer.setFrontHandlerInitializer(new ComposeChannelInitializer<>(frontChannelInitializers));
+            tcpProxyServer.setBackendHandlerInitializer(new ComposeChannelInitializer<>(backendChannelInitializers));
+
+            serverManager.addLast(tcpProxyServer);
         }
         return serverManager;
     }

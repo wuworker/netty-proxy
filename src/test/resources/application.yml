@@ -1,20 +1,6 @@
 spring:
   application:
     name: wxl-proxy
-
-logging:
-  level:
-    com.wxl.proxy: debug
-    root: info
-
-proxy:
-  tcp:
-    boss-threads: 0
-    work-threads: 0
-    server:
-      mysql-proxy:
-        bind-port: 9999
-        remote-host: localhost
-        remote-port: 3306
-
+  pid:
+    file: proxy.pid
 
