@@ -2,6 +2,7 @@
 
 ## tcp隧道代理
 
+## http隧道代理
 
 # 参考
 [[netty官方文档]](https://netty.io/4.1/xref/io/netty/example/proxy/package-summary.html)   

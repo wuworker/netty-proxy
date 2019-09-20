@@ -19,6 +19,8 @@ public class TcpProxyProperties {
 
     public static final String TCP_PROXY_PREFIX = PROXY_PREFIX + ".tcp";
 
+    private boolean enabled = false;
+
     private Duration connectTimeout;
 
     private Map<String, TcpServerProperties> server = new HashMap<>();

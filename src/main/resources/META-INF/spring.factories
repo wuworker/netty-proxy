@@ -4,4 +4,4 @@ org.springframework.context.ApplicationListener=\
 
 # Failure Analyzers
 org.springframework.boot.diagnostics.FailureAnalyzer=\
-  com.wxl.proxy.config.BindPortCheckBeanPostProcessor.ProxyMultiBindFailureAnalyzer
+  com.wxl.proxy.beanpost.BindPortCheckBeanPostProcessor.ProxyBindPortFailureAnalyzer

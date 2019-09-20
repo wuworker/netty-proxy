@@ -1,9 +1,5 @@
 package com.wxl.proxy.config;
 
-import com.wxl.proxy.common.BackendChannelInitializer;
-import com.wxl.proxy.common.ComposeChannelInitializer;
-import com.wxl.proxy.common.FrontChannelInitializer;
-import com.wxl.proxy.common.ServerChannelInitializer;
 import com.wxl.proxy.http.HttpProxyConfig;
 import com.wxl.proxy.http.HttpProxyServer;
 import com.wxl.proxy.http.interceptor.HttpProxyInterceptorInitializer;
@@ -13,6 +9,7 @@ import com.wxl.proxy.properties.ProxyProperties;
 import com.wxl.proxy.server.EventLoopGroupManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,6 +25,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Configuration
+@ConditionalOnProperty(prefix = HttpProxyProperties.HTTP_PROXY_PREFIX, name = "enabled", havingValue = "true")
 @EnableConfigurationProperties({ProxyProperties.class, HttpProxyProperties.class})
 public class HttpProxyConfiguration {
 
@@ -43,11 +41,7 @@ public class HttpProxyConfiguration {
 
     @Bean
     public HttpProxyServer httpProxyServer(EventLoopGroupManager groupManager,
-                                           ObjectProvider<ServerChannelInitializer<HttpProxyConfig>> serverChannelInitializers,
-                                           ObjectProvider<FrontChannelInitializer<HttpProxyConfig>> frontChannelInitializers,
-                                           ObjectProvider<BackendChannelInitializer<HttpProxyConfig>> backendChannelInitializers,
                                            ObjectProvider<HttpProxyInterceptorInitializer> interceptorInitializers) {
-
         Duration connectTimeout = httpProperties.getConnectTimeout();
         if (connectTimeout == null) {
             connectTimeout = proxyProperties.getConnectTimeout();
@@ -77,9 +71,6 @@ public class HttpProxyConfiguration {
         log.debug("create http proxy server:{}", config);
 
         HttpProxyServer server = new HttpProxyServer(config, groupManager.getBossGroup(), groupManager.getWorkGroup());
-        server.setServerHandlerInitializer(new ComposeChannelInitializer<>(serverChannelInitializers));
-        server.setFrontHandlerInitializer(new ComposeChannelInitializer<>(frontChannelInitializers));
-        server.setBackendHandlerInitializer(new ComposeChannelInitializer<>(backendChannelInitializers));
 
         // http拦截器
         List<HttpProxyInterceptorInitializer> initializers = interceptorInitializers.orderedStream().collect(Collectors.toList());

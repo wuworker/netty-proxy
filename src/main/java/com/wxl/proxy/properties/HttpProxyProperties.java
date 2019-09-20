@@ -20,6 +20,8 @@ public class HttpProxyProperties {
 
     private String name = "http-proxy";
 
+    private boolean enabled = false;
+
     private int bindPort;
 
     private Duration connectTimeout;

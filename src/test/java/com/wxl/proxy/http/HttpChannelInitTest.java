@@ -25,7 +25,6 @@ import java.util.concurrent.CountDownLatch;
 public class HttpChannelInitTest {
 
     @Configuration
-    @AutoConfigureBefore(HttpProxyConfiguration.class)
     public static class Config {
         @Bean("serverInit1")
         public ServerChannelInitializer<HttpProxyConfig> serverChannelInitializer1() {

@@ -15,6 +15,8 @@ import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.bind.BindResult;
 import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Bean;
@@ -34,6 +36,7 @@ import static com.wxl.proxy.properties.TcpProxyProperties.TCP_PROXY_PREFIX;
  */
 @Slf4j
 @Configuration
+@ConditionalOnProperty(prefix = TcpProxyProperties.TCP_PROXY_PREFIX, name = "enabled", havingValue = "true")
 public class TcpProxyConfiguration {
 
     @Bean
@@ -59,7 +62,13 @@ public class TcpProxyConfiguration {
         @Override
         public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
             Binder binder = Binder.get(environment);
-            TcpProxyProperties tcpProperties = binder.bind(TCP_PROXY_PREFIX, TcpProxyProperties.class).get();
+
+            // 没配置tcp,忽略
+            BindResult<TcpProxyProperties> bindResult = binder.bind(TCP_PROXY_PREFIX, TcpProxyProperties.class);
+            if (!bindResult.isBound()) {
+                return;
+            }
+            TcpProxyProperties tcpProperties = bindResult.get();
             ProxyProperties proxyProperties = binder.bind(PROXY_PREFIX, ProxyProperties.class).get();
 
             Duration connectTimeout = tcpProperties.getConnectTimeout();
