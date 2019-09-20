@@ -29,6 +29,8 @@ public interface ProxyServer<T extends ProxyConfig> extends Lifecycle {
 
     String name();
 
+    T getConfig();
+
     /**
      * serverChannel初始化
      */

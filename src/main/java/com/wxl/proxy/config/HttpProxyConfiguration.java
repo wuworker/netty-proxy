@@ -74,7 +74,7 @@ public class HttpProxyConfiguration {
                 .connectTimeout(connectTimeout)
                 .build();
 
-        log.debug("http proxy use config:{}", config);
+        log.debug("create http proxy server:{}", config);
 
         HttpProxyServer server = new HttpProxyServer(config, groupManager.getBossGroup(), groupManager.getWorkGroup());
         server.setServerHandlerInitializer(new ComposeChannelInitializer<>(serverChannelInitializers));

@@ -13,8 +13,10 @@ import static com.wxl.proxy.properties.ProxyProperties.PROXY_PREFIX;
  * http代理配置
  */
 @Data
-@ConfigurationProperties(prefix = PROXY_PREFIX + ".http")
+@ConfigurationProperties(prefix = HttpProxyProperties.HTTP_PROXY_PREFIX)
 public class HttpProxyProperties {
+
+    public static final String HTTP_PROXY_PREFIX = PROXY_PREFIX + ".http";
 
     private String name = "http-proxy";
 

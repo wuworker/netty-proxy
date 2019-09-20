@@ -14,8 +14,10 @@ import static com.wxl.proxy.properties.ProxyProperties.PROXY_PREFIX;
  * tcp代理配置
  */
 @Data
-@ConfigurationProperties(prefix = PROXY_PREFIX + ".tcp")
+@ConfigurationProperties(prefix = TcpProxyProperties.TCP_PROXY_PREFIX)
 public class TcpProxyProperties {
+
+    public static final String TCP_PROXY_PREFIX = PROXY_PREFIX + ".tcp";
 
     private Duration connectTimeout;
 

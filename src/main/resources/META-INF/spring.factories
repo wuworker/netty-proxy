@@ -1,0 +1,7 @@
+# Application Listeners
+org.springframework.context.ApplicationListener=\
+  org.springframework.boot.context.ApplicationPidFileWriter
+
+# Failure Analyzers
+org.springframework.boot.diagnostics.FailureAnalyzer=\
+  com.wxl.proxy.config.BindPortCheckBeanPostProcessor.ProxyMultiBindFailureAnalyzer

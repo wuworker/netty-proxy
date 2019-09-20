@@ -13,7 +13,7 @@ import java.time.Duration;
 @ConfigurationProperties(prefix = ProxyProperties.PROXY_PREFIX)
 public class ProxyProperties {
 
-    static final String PROXY_PREFIX = "proxy";
+    public static final String PROXY_PREFIX = "proxy";
 
     private int bossThreads;
 

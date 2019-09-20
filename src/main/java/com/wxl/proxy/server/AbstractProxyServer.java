@@ -33,7 +33,7 @@ public abstract class AbstractProxyServer<T extends ProxyConfig> implements Prox
 
     private ProxyChannelInitializer<SocketChannel, T> backendInitializer;
 
-    protected T config;
+    private T config;
 
     public AbstractProxyServer(T config,
                                EventLoopGroup boosGroup,
@@ -43,6 +43,11 @@ public abstract class AbstractProxyServer<T extends ProxyConfig> implements Prox
         this.config = config;
         this.boosGroup = boosGroup;
         this.workGroup = workGroup;
+    }
+
+    @Override
+    public T getConfig() {
+        return config;
     }
 
     @Override

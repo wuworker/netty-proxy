@@ -23,7 +23,6 @@ public class HttpProxyServer extends AbstractProxyServer<HttpProxyConfig> implem
                            EventLoopGroup boosGroup,
                            EventLoopGroup workGroup) {
         super(config, boosGroup, workGroup);
-        this.config = config;
     }
 
     public void setInterceptorInitializer(HttpProxyInterceptorInitializer interceptorInitializer) {
