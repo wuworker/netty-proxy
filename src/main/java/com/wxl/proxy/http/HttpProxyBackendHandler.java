@@ -39,6 +39,7 @@ public class HttpProxyBackendHandler extends ProxyBackendHandler<HttpProxyConfig
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (inboundChannel.isActive()) {
             if (interceptorPipeline != null && msg instanceof HttpObject) {
+                log.debug("forward response:{}",msg);
                 interceptorPipeline.afterResponse(inboundChannel, ctx.channel(), (HttpObject) msg);
             } else {
                 forwardData(ctx, msg);

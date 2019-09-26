@@ -8,11 +8,16 @@ import com.wxl.proxy.http.interceptor.HttpProxyInterceptorAdapter;
 import com.wxl.proxy.http.interceptor.HttpProxyInterceptorInitializer;
 import com.wxl.proxy.http.interceptor.HttpProxyInterceptorPipeline;
 import com.wxl.proxy.http.proxy.SecondProxyHandlers;
+import com.wxl.proxy.http.ssl.CertPool;
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.proxy.ProxyHandler;
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.resolver.NoopAddressResolverGroup;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.Future;
@@ -49,6 +54,8 @@ public class HttpProxyFrontHandler extends ProxyFrontHandler<HttpProxyConfig> {
 
     private boolean init;
 
+    private SslContext clientSslContext;
+
     private HttpProxyInterceptorPipeline interceptorPipeline;
 
     private HttpProxyInterceptorInitializer interceptorInitializer;
@@ -58,6 +65,7 @@ public class HttpProxyFrontHandler extends ProxyFrontHandler<HttpProxyConfig> {
                                  HttpProxyInterceptorInitializer interceptorInitializer) {
         super(config, backendHandlerInitializer);
         this.interceptorInitializer = interceptorInitializer;
+        this.clientSslContext = config.getClientSslContext();
     }
 
     /**
@@ -65,7 +73,7 @@ public class HttpProxyFrontHandler extends ProxyFrontHandler<HttpProxyConfig> {
      */
     @Override
     protected ProxyBackendHandler<HttpProxyConfig> newBackendHandler(HttpProxyConfig config, Channel inboundChannel) {
-        if (isHttps) {
+        if (isHttps && config.getSsl() == null) {
             return new HttpProxyBackendHandler(config, host, port, inboundChannel, null);
         } else {
             return new HttpProxyBackendHandler(config, host, port, inboundChannel, interceptorPipeline);
@@ -75,10 +83,16 @@ public class HttpProxyFrontHandler extends ProxyFrontHandler<HttpProxyConfig> {
     @Override
     protected void initChannelHandler(SocketChannel ch, Channel inboundChannel) throws Exception {
         super.initChannelHandler(ch, inboundChannel);
-        if (!isHttps) {
+        if (!isHttps || config.getSsl() != null) {
             ch.pipeline().addFirst(HttpClientCodec.class.getName(), new HttpClientCodec());
         }
-        //二级代理
+
+        if (isHttps && clientSslContext != null) {
+            SslHandler sslHandler = clientSslContext.newHandler(ch.alloc(), host, port);
+            ch.pipeline().addFirst(SslHandler.class.getName(), sslHandler);
+        }
+
+        // 二级代理
         if (config.getSecondProxy() != null) {
             ch.pipeline().addFirst(ProxyHandler.class.getName(),
                     SecondProxyHandlers.newProxyHandler(config.getSecondProxy()));
@@ -115,7 +129,6 @@ public class HttpProxyFrontHandler extends ProxyFrontHandler<HttpProxyConfig> {
                 init = initConnect(ctx, request);
                 return;
             }
-
             // http转发
             interceptorPipeline.beforeRequest(ctx.channel(), outboundChannel, request);
         }
@@ -125,7 +138,7 @@ public class HttpProxyFrontHandler extends ProxyFrontHandler<HttpProxyConfig> {
                 log.warn("http proxy is not ready!");
                 ReferenceCountUtil.release(msg);
                 ctx.channel().read();
-            } else if (isHttps) {
+            } else if (isHttps && config.getSsl() == null) {
                 //must is last http content
                 log.debug("https receive content:{}", msg);
                 ReferenceCountUtil.release(msg);
@@ -149,6 +162,21 @@ public class HttpProxyFrontHandler extends ProxyFrontHandler<HttpProxyConfig> {
                 ReferenceCountUtil.release(msg);
                 ctx.channel().read();
             } else {
+                if (config.getSsl() != null) {
+                    ByteBuf data = (ByteBuf) msg;
+                    // ssl握手
+                    if (data.getByte(0) == 22) {
+                        SslContext sslCtx = SslContextBuilder
+                                .forServer(config.getSsl().getServerPriKey(), CertPool.getCert(this.host, config.getSsl()))
+                                .build();
+                        ctx.pipeline().addFirst(HttpServerCodec.class.getName(), new HttpServerCodec());
+                        ctx.pipeline().addFirst(SslHandler.class.getName(), sslCtx.newHandler(ctx.alloc()));
+                        //重新过一遍pipeline，拿到解密后的的http报文
+                        ctx.pipeline().fireChannelRead(msg);
+                        return;
+                    }
+                }
+
                 forwardData(ctx.channel(), msg);
             }
         }
@@ -177,6 +205,9 @@ public class HttpProxyFrontHandler extends ProxyFrontHandler<HttpProxyConfig> {
         // https代理
         if (HttpMethod.CONNECT.equals(request.method())) {
             isHttps = true;
+            if (config.getSsl() != null) {
+                interceptorPipeline = buildHttpPipeline();
+            }
             ReferenceCountUtil.release(request);
             doConnect(ctx.channel(), logListener(f -> {
                 // 远程连接成功
@@ -254,7 +285,7 @@ public class HttpProxyFrontHandler extends ProxyFrontHandler<HttpProxyConfig> {
      * 数据转发
      */
     private void forwardData(Channel inboundChannel, Object msg) {
-        log.debug("forward data:{}", msg);
+        log.debug("forward request:{}", msg);
         if (outboundChannel != null && outboundChannel.isActive()) {
             outboundChannel.writeAndFlush(msg)
                     .addListener(logListener(f -> {
@@ -287,7 +318,8 @@ public class HttpProxyFrontHandler extends ProxyFrontHandler<HttpProxyConfig> {
         HttpProxyInterceptor<HttpObject, HttpObject> head = new HttpProxyInterceptorAdapter() {
             @Override
             public void beforeRequest(Channel inboundChannel, Channel outboundChannel, HttpObject request, HttpProxyInterceptorPipeline pipeline) throws Exception {
-                if (request instanceof HttpRequest) {
+                //http代理 uri里包含整个地址
+                if (!isHttps && (request instanceof HttpRequest)) {
                     // http代理修改uri
                     HttpRequest httpRequest = (HttpRequest) request;
                     log.debug("current uri is:{} --> {}", httpRequest.uri(), new URL(httpRequest.uri()).getFile());

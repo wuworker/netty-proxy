@@ -8,7 +8,7 @@ proxy:
   boss-threads: 0
   work-threads: 0
   tcp:
-    enabled: true
+    enabled: false
     server:
       mysql-proxy:
         bind-port: 9999
@@ -22,8 +22,12 @@ proxy:
     enabled: true
     bind-port: 8888
     connect-timeout: 5s
-    second-proxy:
-      host: localhost
-      port: 1080
-      type: socks5
+    ssl:
+      enabled: true
+      ca-cert-path: 'classpath:ssl/root_ca.cer'
+      ca-private-key-path: 'classpath:ssl/ca_private.der'
+#    second-proxy:
+#      host: localhost
+#      port: 1080
+#      type: socks5
 

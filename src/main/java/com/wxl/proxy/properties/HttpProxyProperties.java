@@ -26,6 +26,14 @@ public class HttpProxyProperties {
 
     private Duration connectTimeout;
 
+    /**
+     * ssl配置，用于https解密
+     */
+    private SslProperties ssl = new SslProperties();
+
+    /**
+     * 二级代理配置
+     */
     private SecondProxyProperties secondProxy = new SecondProxyProperties();
 
     @Data
@@ -40,6 +48,23 @@ public class HttpProxyProperties {
         private String username;
 
         private String password;
+
+    }
+
+    @Data
+    public static class SslProperties {
+
+        private boolean enabled = false;
+
+        /**
+         * ca私钥路径
+         */
+        private String caPrivateKeyPath;
+
+        /**
+         * ca证书路径
+         */
+        private String caCertPath;
 
     }
 

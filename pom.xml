@@ -20,6 +20,7 @@
 		<java.version>1.8</java.version>
 		<netty.version>4.1.34.Final</netty.version>
 		<vavr.version>0.10.0</vavr.version>
+		<bcpkix-jdk15on.version>1.61</bcpkix-jdk15on.version>
 	</properties>
 
 	<dependencies>
@@ -38,6 +39,12 @@
 			<!--<artifactId>vavr</artifactId>-->
 			<!--<version>${vavr.version}</version>-->
 		<!--</dependency>-->
+
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcpkix-jdk15on</artifactId>
+			<version>${bcpkix-jdk15on.version}</version>
+		</dependency>
 
 		<dependency>
 			<groupId>io.netty</groupId>
