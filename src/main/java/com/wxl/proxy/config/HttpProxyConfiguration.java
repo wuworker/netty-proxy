@@ -1,11 +1,14 @@
 package com.wxl.proxy.config;
 
+import com.wxl.proxy.exception.BeanConfigException;
 import com.wxl.proxy.http.HttpProxyConfig;
 import com.wxl.proxy.http.HttpProxyServer;
 import com.wxl.proxy.http.interceptor.HttpProxyInterceptorInitializer;
 import com.wxl.proxy.http.proxy.SecondProxyConfig;
 import com.wxl.proxy.http.ssl.SslConfig;
 import com.wxl.proxy.properties.HttpProxyProperties;
+import com.wxl.proxy.properties.HttpProxyProperties.SecondProxyProperties;
+import com.wxl.proxy.properties.HttpProxyProperties.SslProperties;
 import com.wxl.proxy.properties.ProxyProperties;
 import com.wxl.proxy.server.EventLoopGroupManager;
 import com.wxl.proxy.utils.CertUtils;
@@ -70,58 +73,17 @@ public class HttpProxyConfiguration implements ResourceLoaderAware {
         }
 
         // ssl配置,用于https解密
-        HttpProxyProperties.SslProperties ssl = httpProperties.getSsl();
+        SslProperties ssl = httpProperties.getSsl();
         SslConfig sslConfig = null;
-        if (ssl != null && ssl.isEnabled()) {
-            SslConfig.SslConfigBuilder builder = SslConfig.builder();
-
-            // ca证书
-            String certPath = ssl.getCaCertPath();
-            if (StringUtils.isEmpty(certPath)) {
-                throw new IllegalStateException("ca cert can not empty");
-            }
-            try {
-                X509Certificate cert = CertUtils.loadCert(resourceLoader.getResource(certPath));
-
-                builder.issuer(CertUtils.getIssuer(cert))
-                        .subject(CertUtils.getSubject(cert))
-                        .caNotBefore(cert.getNotBefore())
-                        .caNotAfter(cert.getNotAfter());
-            } catch (IOException | CertificateException e) {
-                throw new IllegalStateException("cert is illegal", e);
-            }
-
-            // ca私钥,用于给动态生成的网站SSL证书签证
-            String caPriKeyPath = ssl.getCaPrivateKeyPath();
-            if (StringUtils.isEmpty(caPriKeyPath)) {
-                throw new IllegalStateException("ca pri key can not empty");
-            }
-            try {
-                PrivateKey privateKey = CertUtils.loadRsaPriKey(resourceLoader.getResource(caPriKeyPath));
-                builder.caPrivateKey(privateKey);
-            } catch (IOException | InvalidKeySpecException e) {
-                throw new IllegalStateException("ca private key is illegal", e);
-            }
-
-            // 服务端ssl握手的公私钥对
-            KeyPair keyPair = CertUtils.genRsaKeyPair();
-            sslConfig = builder.serverPriKey(keyPair.getPrivate())
-                    .serverPubKey(keyPair.getPublic())
-                    .build();
+        if (ssl != null) {
+            sslConfig = buildSslConfig(ssl);
         }
 
         // 二级代理
-        HttpProxyProperties.SecondProxyProperties secondProxyProp = httpProperties.getSecondProxy();
+        SecondProxyProperties secondProxyProp = httpProperties.getSecondProxy();
         SecondProxyConfig secondProxyConfig = null;
-        if (secondProxyProp != null && secondProxyProp.getType() != null) {
-            InetSocketAddress address = new InetSocketAddress(secondProxyProp.getHost(), secondProxyProp.getPort());
-
-            secondProxyConfig = SecondProxyConfig.builder()
-                    .type(secondProxyProp.getType())
-                    .address(address)
-                    .username(secondProxyProp.getUsername())
-                    .password(secondProxyProp.getPassword())
-                    .build();
+        if (secondProxyProp != null) {
+            secondProxyConfig = buildSecondProxyConfig(secondProxyProp);
         }
 
         // 代理与真实服务器连接的ssl
@@ -134,9 +96,20 @@ public class HttpProxyConfiguration implements ResourceLoaderAware {
             throw new IllegalStateException(e);
         }
 
+        String serverName = httpProperties.getName();
+        if (!StringUtils.hasText(serverName)) {
+            serverName = "http-proxy";
+        }
+
+        Integer bindPort = httpProperties.getBindPort();
+        if (bindPort == null || bindPort <= 0 || bindPort > 0xffff) {
+            throw new BeanConfigException("proxy.http.bind-port",
+                    "bind port is illegal");
+        }
+
         HttpProxyConfig config = HttpProxyConfig.builder()
-                .serverName(httpProperties.getName())
-                .bindPort(httpProperties.getBindPort())
+                .serverName(serverName)
+                .bindPort(bindPort)
                 .clientSslContext(clientSslContext)
                 .ssl(sslConfig)
                 .secondProxy(secondProxyConfig)
@@ -157,6 +130,98 @@ public class HttpProxyConfiguration implements ResourceLoaderAware {
             });
         }
         return server;
+    }
+
+
+    /**
+     * ssl配置,用于https解密
+     */
+    private SslConfig buildSslConfig(SslProperties ssl) {
+        SslConfig.SslConfigBuilder builder = SslConfig.builder();
+
+        // ca证书
+        String certPath = ssl.getCaCertPath();
+        if (!StringUtils.hasText(certPath)) {
+            throw new BeanConfigException("proxy.http.ssl.ca-cert-path",
+                    "ca cert path can not empty when ssl is enabled",
+                    "Please to config ca cert or remove 'proxy.http.ssl' config if you won't decrypt https");
+        }
+        try {
+            X509Certificate cert = CertUtils.loadCert(resourceLoader.getResource(certPath));
+
+            builder.issuer(CertUtils.getIssuer(cert))
+                    .subject(CertUtils.getSubject(cert))
+                    .caNotBefore(cert.getNotBefore())
+                    .caNotAfter(cert.getNotAfter());
+        } catch (IOException e) {
+            throw new BeanConfigException("proxy.http.ssl.ca-cert-path",
+                    "ca cert read fail", e);
+        } catch (CertificateException e) {
+            throw new BeanConfigException("proxy.http.ssl.ca-cert-path",
+                    "ca cert illegal! must is x509",
+                    "You can use openssl to generate x509 cert. Like:\n"
+                            + "\topenssl req -new -x509 -days 365 -key ca_private.pem -out ca.cer",
+                    e);
+        }
+
+        // ca私钥,用于给动态生成的网站SSL证书签证
+        String caPriKeyPath = ssl.getCaPrivateKeyPath();
+        if (!StringUtils.hasText(caPriKeyPath)) {
+            throw new BeanConfigException("proxy.http.ssl.ca-private-key-path",
+                    "ca private key path can not empty when ssl is enabled",
+                    "Please to config ca private key or remove 'proxy.http.ssl' config");
+        }
+        try {
+            PrivateKey privateKey = CertUtils.loadRsaPriKey(resourceLoader.getResource(caPriKeyPath));
+            builder.caPrivateKey(privateKey);
+        } catch (IOException e) {
+            throw new BeanConfigException("proxy.http.ssl.ca-private-key-path",
+                    "ca private key read fail!",
+                    "Please check ca private key is exist", e);
+        } catch (InvalidKeySpecException e) {
+            throw new BeanConfigException("proxy.http.ssl.ca-private-key-path",
+                    "ca private key illegal! must is pkcs8 and der format",
+                    "You can use openssl to generate rsa key.\n"
+                            + "\topenssl genrsa -out private_key.pem 2048\n"
+                            + "Then convert to pkcs8 and der.\n"
+                            + "\topenssl pkcs8 -topk8 -in private_key.pem -out private_key.der -nocrypt -outform der",
+                    e);
+        }
+
+        // 服务端ssl握手的公私钥对
+        KeyPair keyPair = CertUtils.genRsaKeyPair();
+        return builder.serverPriKey(keyPair.getPrivate())
+                .serverPubKey(keyPair.getPublic())
+                .build();
+    }
+
+    /**
+     * 二级代理配置
+     */
+    private SecondProxyConfig buildSecondProxyConfig(SecondProxyProperties secondProxy) {
+        if (secondProxy.getType() == null) {
+            throw new BeanConfigException("proxy.http.second-proxy.type",
+                    "second proxy type can not null",
+                    "Please config proxy type in [http/socks4/socks5] or "
+                            + "remove 'proxy.http.second-proxy' config if you won't use second proxy");
+        }
+        if (!StringUtils.hasText(secondProxy.getHost())) {
+            throw new BeanConfigException("proxy.http.second-proxy.host",
+                    "host can not empty");
+        }
+        if (secondProxy.getPort() == null || secondProxy.getPort() <= 0 || secondProxy.getPort() > 0xffff) {
+            throw new BeanConfigException("proxy.http.second-proxy.port",
+                    "port is illegal");
+        }
+
+        InetSocketAddress address = new InetSocketAddress(secondProxy.getHost(), secondProxy.getPort());
+
+        return SecondProxyConfig.builder()
+                .type(secondProxy.getType())
+                .address(address)
+                .username(secondProxy.getUsername())
+                .password(secondProxy.getPassword())
+                .build();
     }
 
 }

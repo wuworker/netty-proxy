@@ -28,11 +28,11 @@ public class TcpProxyProperties {
     @Data
     public static class TcpServerProperties {
 
-        private int bindPort;
+        private Integer bindPort;
 
         private String remoteHost;
 
-        private int remotePort;
+        private Integer remotePort;
 
         private Duration connectTimeout;
     }

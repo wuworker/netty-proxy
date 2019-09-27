@@ -1,11 +1,12 @@
 package com.wxl.proxy.beanpost;
 
+import com.wxl.proxy.exception.BeanConfigException;
+import com.wxl.proxy.http.HttpProxyServer;
 import com.wxl.proxy.server.ProxyConfig;
 import com.wxl.proxy.server.ProxyServer;
+import com.wxl.proxy.tcp.TcpProxyServer;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
-import org.springframework.boot.diagnostics.AbstractFailureAnalyzer;
-import org.springframework.boot.diagnostics.FailureAnalysis;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,34 +24,20 @@ public class BindPortCheckBeanPostProcessor implements BeanPostProcessor {
         if (bean instanceof ProxyServer) {
             ProxyConfig config = ((ProxyServer) bean).getConfig();
             int bindPort = config.getBindPort();
-            if (bindPort < 0 || bindPort > 0xFFFF) {
-                throw new ProxyBindPortException(bindPort, config.getServerName());
-            }
             String old = bindPorts.putIfAbsent(bindPort, config.getServerName());
             if (old != null) {
-                throw new ProxyBindPortException(bindPort, config.getServerName(), old);
+                String key;
+                if (bean instanceof TcpProxyServer) {
+                    key = "proxy.tcp.server." + config.getServerName() + ".bind-port";
+                } else if (bean instanceof HttpProxyServer) {
+                    key = "proxy.http.bind-port";
+                } else {
+                    key = null;
+                }
+                throw new BeanConfigException(key, "multi server bind same port:" + bindPort + "!",
+                        "Please check server bind port!");
             }
         }
         return bean;
     }
-
-    private static class ProxyBindPortException extends BeansException {
-
-        public ProxyBindPortException(int port, String name) {
-            super("server '" + name + "' bind port out of range:" + port);
-        }
-
-        public ProxyBindPortException(int port, String name1, String name2) {
-            super("multi server bind same port:" + port + "! '" + name1 + "' and '" + name2 + "'");
-        }
-    }
-
-    public static class ProxyBindPortFailureAnalyzer extends AbstractFailureAnalyzer<ProxyBindPortException> {
-
-        @Override
-        protected FailureAnalysis analyze(Throwable rootFailure, ProxyBindPortException cause) {
-            return new FailureAnalysis(cause.getMessage(), "Please check server bind port!", cause);
-        }
-    }
-
 }

@@ -1,5 +1,6 @@
 package com.wxl.proxy.config;
 
+import com.wxl.proxy.exception.BeanConfigException;
 import com.wxl.proxy.properties.ProxyProperties;
 import com.wxl.proxy.properties.TcpProxyProperties;
 import com.wxl.proxy.properties.TcpProxyProperties.TcpServerProperties;
@@ -22,6 +23,8 @@ import org.springframework.context.EnvironmentAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
@@ -76,14 +79,36 @@ public class TcpProxyConfiguration {
                 connectTimeout = proxyProperties.getConnectTimeout();
             }
 
+            if (CollectionUtils.isEmpty(tcpProperties.getServer())) {
+                log.warn("no tcp proxy server! can config '" + TCP_PROXY_PREFIX + ".enabled=false' to disable tcp proxy");
+                return;
+            }
+
             for (Map.Entry<String, TcpServerProperties> entry : tcpProperties.getServer().entrySet()) {
                 String key = entry.getKey();
                 TcpServerProperties prop = entry.getValue();
 
+                Integer bindPort = prop.getBindPort();
+                if (bindPort == null || bindPort <= 0 || bindPort > 0xffff) {
+                    throw new BeanConfigException("proxy.tcp.server." + key + ".bind-port", "tcp proxy bind port is illegal");
+                }
+
+                String remoteHost = prop.getRemoteHost();
+                Integer remotePort = prop.getRemotePort();
+
+                if (!StringUtils.hasText(remoteHost)) {
+                    throw new BeanConfigException("proxy.tcp.server." + key + ".remote-host",
+                            "remote host can not empty");
+                }
+                if (remotePort == null || remotePort <= 0 || remotePort > 0xffff) {
+                    throw new BeanConfigException("proxy.tcp.server." + key + ".remote-port",
+                            "remote port is illegal");
+                }
+
                 TcpProxyConfig config = TcpProxyConfig.builder()
                         .serverName(key)
-                        .bindPort(prop.getBindPort())
-                        .remoteAddress(new InetSocketAddress(prop.getRemoteHost(), prop.getRemotePort()))
+                        .bindPort(bindPort)
+                        .remoteAddress(new InetSocketAddress(remoteHost, remotePort))
                         .connectTimeout(prop.getConnectTimeout() == null ? connectTimeout : prop.getConnectTimeout())
                         .build();
 

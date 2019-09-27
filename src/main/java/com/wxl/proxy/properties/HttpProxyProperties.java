@@ -22,19 +22,19 @@ public class HttpProxyProperties {
 
     private boolean enabled = false;
 
-    private int bindPort;
+    private Integer bindPort;
 
     private Duration connectTimeout;
 
     /**
      * ssl配置，用于https解密
      */
-    private SslProperties ssl = new SslProperties();
+    private SslProperties ssl;
 
     /**
      * 二级代理配置
      */
-    private SecondProxyProperties secondProxy = new SecondProxyProperties();
+    private SecondProxyProperties secondProxy;
 
     @Data
     public static class SecondProxyProperties {
@@ -43,7 +43,7 @@ public class HttpProxyProperties {
 
         private String host;
 
-        private int port;
+        private Integer port;
 
         private String username;
 
@@ -53,8 +53,6 @@ public class HttpProxyProperties {
 
     @Data
     public static class SslProperties {
-
-        private boolean enabled = false;
 
         /**
          * ca私钥路径
