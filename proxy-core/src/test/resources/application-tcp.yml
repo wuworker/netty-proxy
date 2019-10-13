@@ -1,0 +1,12 @@
+proxy:
+  boss-threads: 0
+  work-threads: 0
+  tcp:
+    enabled: true
+    server:
+      redis-proxy:
+        bind-port: 6378
+        remote-host: localhost
+        remote-port: 6379
+
+
