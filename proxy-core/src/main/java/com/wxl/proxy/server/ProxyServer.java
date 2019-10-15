@@ -1,6 +1,6 @@
 package com.wxl.proxy.server;
 
-import com.wxl.proxy.common.ProxyChannelInitializer;
+import com.wxl.proxy.handler.ProxyChannelInitializer;
 import com.wxl.proxy.log.ChannelHandlerLogEnhance;
 import com.wxl.proxy.log.LoggingChannelFutureListener;
 import io.netty.channel.Channel;

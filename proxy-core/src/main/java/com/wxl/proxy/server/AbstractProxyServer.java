@@ -1,7 +1,7 @@
 package com.wxl.proxy.server;
 
-import com.wxl.proxy.common.ProxyChannelInitializer;
-import com.wxl.proxy.common.ProxyFrontHandler;
+import com.wxl.proxy.handler.ProxyChannelInitializer;
+import com.wxl.proxy.handler.ProxyFrontHandler;
 import com.wxl.proxy.log.ServerLoggingHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;

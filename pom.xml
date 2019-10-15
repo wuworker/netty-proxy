@@ -6,6 +6,9 @@
     <modules>
         <module>proxy-core</module>
         <module>proxy-application</module>
+        <module>proxy-tcp</module>
+        <module>proxy-http</module>
+        <module>proxy-boot-starter</module>
     </modules>
 
     <parent>
@@ -17,7 +20,7 @@
 
     <groupId>com.wxl.proxy</groupId>
     <artifactId>netty-proxy</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0-SNAPSHOT</version>
     <name>proxy</name>
     <description>Netty Proxy Project</description>
 
@@ -43,6 +46,18 @@
         </dependencies>
     </dependencyManagement>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
     <build>
         <plugins>
