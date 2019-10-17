@@ -1,11 +1,12 @@
 package com.wxl.proxy.tcp;
 
 import com.wxl.proxy.handler.ProxyChannelInitializer;
-import com.wxl.proxy.handler.ProxyFrontHandler;
 import com.wxl.proxy.server.AbstractProxyServer;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import lombok.extern.slf4j.Slf4j;
+
+import static com.wxl.proxy.server.ProxyServer.logHandler;
 
 /**
  * Create by wuxingle on 2019/8/17
@@ -21,13 +22,11 @@ public class TcpProxyServer extends AbstractProxyServer<TcpProxyConfig> {
         super(config, boosGroup, workGroup);
     }
 
-    /**
-     * 前置处理器
-     */
     @Override
-    protected ProxyFrontHandler<TcpProxyConfig> newFrontHandler(
-            TcpProxyConfig config, ProxyChannelInitializer<SocketChannel, TcpProxyConfig> backendInitializer) {
-        return new TcpProxyFrontHandler(config, backendInitializer);
+    protected void initClientChannel(SocketChannel ch, ProxyChannelInitializer<SocketChannel, TcpProxyConfig> backendInitializer)
+            throws Exception {
+        TcpProxyFrontHandler frontHandler = new TcpProxyFrontHandler(getConfig(), backendInitializer);
+        ch.pipeline().addLast(TcpProxyFrontHandler.class.getName(), logHandler(frontHandler));
     }
 
 }

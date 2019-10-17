@@ -1,7 +1,6 @@
 package com.wxl.proxy.http;
 
 import com.wxl.proxy.handler.ProxyChannelInitializer;
-import com.wxl.proxy.handler.ProxyFrontHandler;
 import com.wxl.proxy.http.interceptor.HttpProxyInterceptorInitializer;
 import com.wxl.proxy.server.AbstractProxyServer;
 import io.netty.channel.EventLoopGroup;
@@ -9,6 +8,8 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpServerCodec;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.SmartLifecycle;
+
+import static com.wxl.proxy.server.ProxyServer.logHandler;
 
 /**
  * Create by wuxingle on 2019/9/1
@@ -25,26 +26,19 @@ public class HttpProxyServer extends AbstractProxyServer<HttpProxyConfig> implem
         super(config, boosGroup, workGroup);
     }
 
-    public void setInterceptorInitializer(HttpProxyInterceptorInitializer interceptorInitializer) {
+    public void setHttpInterceptorInitializer(HttpProxyInterceptorInitializer interceptorInitializer) {
         this.interceptorInitializer = interceptorInitializer;
-    }
-
-    /**
-     * 前置处理器
-     */
-    @Override
-    protected ProxyFrontHandler<HttpProxyConfig> newFrontHandler(
-            HttpProxyConfig config, ProxyChannelInitializer<SocketChannel, HttpProxyConfig> backendInitializer) {
-        return new HttpProxyFrontHandler(config, backendInitializer, interceptorInitializer);
     }
 
     /**
      * client channel handler 初始化
      */
     @Override
-    protected void initClientChannel(SocketChannel ch) throws Exception {
-        super.initClientChannel(ch);
-        ch.pipeline().addFirst(HttpServerCodec.class.getName(), new HttpServerCodec());
+    protected void initClientChannel(SocketChannel ch, ProxyChannelInitializer<SocketChannel, HttpProxyConfig> backendInitializer)
+            throws Exception {
+        HttpProxyFrontHandler frontHandler = new HttpProxyFrontHandler(getConfig(), backendInitializer, interceptorInitializer);
+        ch.pipeline().addFirst(HttpServerCodec.class.getName(), new HttpServerCodec())
+                .addLast(HttpProxyFrontHandler.class.getName(), logHandler(frontHandler));
     }
 
 

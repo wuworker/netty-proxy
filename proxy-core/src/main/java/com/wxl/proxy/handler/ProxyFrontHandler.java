@@ -66,17 +66,12 @@ public abstract class ProxyFrontHandler<T extends ProxyConfig> extends ChannelIn
         return bootstrap;
     }
 
-
+    /**
+     * 和真实服务连接的handler初始化
+     */
     protected void initChannelHandler(SocketChannel ch, Channel inboundChannel) throws Exception {
-        ProxyBackendHandler<T> backendHandler = newBackendHandler(config, inboundChannel);
-        if (backendHandler != null) {
-            ch.pipeline().addLast(backendHandler.getClass().getName(), logHandler(backendHandler));
-        }
+
     }
 
-    /**
-     * 后置处理器
-     */
-    protected abstract ProxyBackendHandler<T> newBackendHandler(T config, Channel inboundChannel);
 }
 

@@ -1,6 +1,5 @@
 package com.wxl.proxy.tcp;
 
-import com.wxl.proxy.handler.ProxyBackendHandler;
 import com.wxl.proxy.handler.ProxyChannelInitializer;
 import com.wxl.proxy.handler.ProxyFrontHandler;
 import io.netty.channel.Channel;
@@ -13,8 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
 
-import static com.wxl.proxy.server.ProxyServer.ATTR_BACKEND_CHANNEL;
-import static com.wxl.proxy.server.ProxyServer.logListener;
+import static com.wxl.proxy.server.ProxyServer.*;
 
 /**
  * Create by wuxingle on 2019/8/17
@@ -29,11 +27,12 @@ public class TcpProxyFrontHandler extends ProxyFrontHandler<TcpProxyConfig> {
     }
 
     /**
-     * 后置处理器
+     * 和真实服务连接的handler初始化
      */
     @Override
-    protected ProxyBackendHandler<TcpProxyConfig> newBackendHandler(TcpProxyConfig config, Channel inboundChannel) {
-        return new TcpProxyBackendHandler(config, inboundChannel);
+    protected void initChannelHandler(SocketChannel ch, Channel inboundChannel) throws Exception {
+        TcpProxyBackendHandler handler = new TcpProxyBackendHandler(config, inboundChannel);
+        ch.pipeline().addLast(TcpProxyBackendHandler.class.getName(), logHandler(handler));
     }
 
     @Override

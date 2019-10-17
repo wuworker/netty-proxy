@@ -1,7 +1,6 @@
 package com.wxl.proxy.server;
 
 import com.wxl.proxy.handler.ProxyChannelInitializer;
-import com.wxl.proxy.handler.ProxyFrontHandler;
 import com.wxl.proxy.log.ServerLoggingHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -9,8 +8,6 @@ import io.netty.channel.socket.ServerSocketChannel;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.springframework.util.Assert;
-
-import static com.wxl.proxy.server.ProxyServer.logHandler;
 
 /**
  * Create by wuxingle on 2019/8/23
@@ -38,8 +35,10 @@ public abstract class AbstractProxyServer<T extends ProxyConfig> implements Prox
     public AbstractProxyServer(T config,
                                EventLoopGroup boosGroup,
                                EventLoopGroup workGroup) {
+        Assert.notNull(workGroup, "config can not null!");
         Assert.notNull(boosGroup, "boss event loop group can not null!");
         Assert.notNull(workGroup, "work event loop group can not null!");
+
         this.config = config;
         this.boosGroup = boosGroup;
         this.workGroup = workGroup;
@@ -70,7 +69,7 @@ public abstract class AbstractProxyServer<T extends ProxyConfig> implements Prox
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
                         protected void initChannel(SocketChannel ch) throws Exception {
-                            initClientChannel(ch);
+                            initClientChannel(ch, backendInitializer);
                             if (frontInitializer != null) {
                                 frontInitializer.init(ch, config);
                             }
@@ -142,18 +141,9 @@ public abstract class AbstractProxyServer<T extends ProxyConfig> implements Prox
     /**
      * client channel handler 初始化
      */
-    protected void initClientChannel(SocketChannel ch) throws Exception {
-        //应用前置处理器
-        ProxyFrontHandler<T> frontHandler = newFrontHandler(config, backendInitializer);
-        if (frontHandler != null) {
-            ch.pipeline().addLast(frontHandler.getClass().getName(), logHandler(frontHandler));
-        }
-    }
+    protected void initClientChannel(SocketChannel ch, ProxyChannelInitializer<SocketChannel, T> backendInitializer)
+            throws Exception {
 
-    /**
-     * 前置处理器
-     */
-    protected abstract ProxyFrontHandler<T> newFrontHandler(
-            T config, ProxyChannelInitializer<SocketChannel, T> backendInitializer);
+    }
 
 }

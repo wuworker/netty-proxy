@@ -1,15 +1,15 @@
 package com.wxl.proxy.autoconfig.http;
 
 import com.wxl.proxy.autoconfig.exception.BeanConfigException;
+import com.wxl.proxy.autoconfig.http.HttpProxyProperties.SecondProxyProperties;
+import com.wxl.proxy.autoconfig.http.HttpProxyProperties.SslProperties;
 import com.wxl.proxy.autoconfig.server.EventLoopGroupManager;
+import com.wxl.proxy.autoconfig.server.ProxyProperties;
 import com.wxl.proxy.http.HttpProxyConfig;
 import com.wxl.proxy.http.HttpProxyServer;
 import com.wxl.proxy.http.interceptor.HttpProxyInterceptorInitializer;
 import com.wxl.proxy.http.proxy.SecondProxyConfig;
 import com.wxl.proxy.http.ssl.SslConfig;
-import com.wxl.proxy.autoconfig.http.HttpProxyProperties.SecondProxyProperties;
-import com.wxl.proxy.autoconfig.http.HttpProxyProperties.SslProperties;
-import com.wxl.proxy.autoconfig.server.ProxyProperties;
 import com.wxl.proxy.http.utils.CertUtils;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
@@ -87,16 +87,6 @@ public class HttpProxyAutoConfiguration implements ResourceLoaderAware {
             secondProxyConfig = buildSecondProxyConfig(secondProxyProp);
         }
 
-        // 代理与真实服务器连接的ssl
-        SslContext clientSslContext;
-        try {
-            clientSslContext = SslContextBuilder.forClient()
-                    .trustManager(InsecureTrustManagerFactory.INSTANCE)
-                    .build();
-        } catch (SSLException e) {
-            throw new IllegalStateException(e);
-        }
-
         String serverName = httpProperties.getName();
         if (!StringUtils.hasText(serverName)) {
             serverName = "http-proxy";
@@ -111,7 +101,6 @@ public class HttpProxyAutoConfiguration implements ResourceLoaderAware {
         HttpProxyConfig config = HttpProxyConfig.builder()
                 .serverName(serverName)
                 .bindPort(bindPort)
-                .clientSslContext(clientSslContext)
                 .ssl(sslConfig)
                 .secondProxy(secondProxyConfig)
                 .connectTimeout(connectTimeout)
@@ -124,7 +113,7 @@ public class HttpProxyAutoConfiguration implements ResourceLoaderAware {
         // http拦截器
         List<HttpProxyInterceptorInitializer> initializers = interceptorInitializers.orderedStream().collect(Collectors.toList());
         if (!initializers.isEmpty()) {
-            server.setInterceptorInitializer(pipeline -> {
+            server.setHttpInterceptorInitializer(pipeline -> {
                 for (HttpProxyInterceptorInitializer initializer : initializers) {
                     initializer.init(pipeline);
                 }
@@ -187,6 +176,16 @@ public class HttpProxyAutoConfiguration implements ResourceLoaderAware {
                             + "Then convert to pkcs8 and der.\n"
                             + "\topenssl pkcs8 -topk8 -in private_key.pem -out private_key.der -nocrypt -outform der",
                     e);
+        }
+
+        // 与真实服务器连接的ssl
+        try {
+            SslContext clientSslContext = SslContextBuilder.forClient()
+                    .trustManager(InsecureTrustManagerFactory.INSTANCE)
+                    .build();
+            builder.clientSslContext(clientSslContext);
+        } catch (SSLException e) {
+            throw new IllegalStateException(e);
         }
 
         // 服务端ssl握手的公私钥对

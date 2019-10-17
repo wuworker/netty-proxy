@@ -1,5 +1,6 @@
 package com.wxl.proxy.http.ssl;
 
+import io.netty.handler.ssl.SslContext;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
@@ -13,7 +14,7 @@ import java.util.Date;
  * http代理的ssl配置，用https解密
  */
 @Getter
-@ToString(exclude = {"caPrivateKey", "serverPriKey", "serverPubKey"})
+@ToString(exclude = {"caPrivateKey", "serverPriKey", "serverPubKey", "clientSslContext"})
 @Builder
 public class SslConfig {
 
@@ -37,4 +38,8 @@ public class SslConfig {
 
     private PublicKey serverPubKey;
 
+    /**
+     * 和真实服务连接的ssl
+     */
+    private SslContext clientSslContext;
 }
