@@ -38,3 +38,5 @@ logs
 pkg/
 .DS_Store
 release.properties
+release-pom.xml
+pom.xml.releaseBackup
