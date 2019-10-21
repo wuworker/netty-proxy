@@ -35,3 +35,5 @@ logs
 *.log
 *.pid
 *.versionsBackup
+pkg/
+.DS_Store

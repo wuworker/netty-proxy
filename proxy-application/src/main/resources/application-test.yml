@@ -20,6 +20,7 @@ proxy:
         remote-port: 6379
   http:
     enabled: true
+    log: false
     bind-port: 8888
     connect-timeout: 5s
     ssl:

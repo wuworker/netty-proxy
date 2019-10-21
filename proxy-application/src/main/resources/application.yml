@@ -4,9 +4,3 @@ spring:
   pid:
     file: proxy.pid
 
-logging:
-  level:
-    com.wxl.proxy: debug
-    root: info
-  path: logs/
-
