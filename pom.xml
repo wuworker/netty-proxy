@@ -26,7 +26,7 @@
 
     <properties>
         <java.version>1.8</java.version>
-        <netty.version>4.1.34.Final</netty.version>
+        <netty.version>4.1.42.Final</netty.version>
         <bcpkix-jdk15on.version>1.61</bcpkix-jdk15on.version>
     </properties>
 
