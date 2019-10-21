@@ -20,9 +20,13 @@
 
     <groupId>com.wxl.proxy</groupId>
     <artifactId>netty-proxy</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.1-SNAPSHOT</version>
     <name>proxy</name>
     <description>Netty Proxy Project</description>
+
+    <scm>
+        <developerConnection>scm:git:git@github.com:wuworker/netty-proxy.git</developerConnection>
+    </scm>
 
     <properties>
         <java.version>1.8</java.version>
@@ -53,6 +57,15 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <skipTests>true</skipTests>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5.3</version>
+                <configuration>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <goals>install</goals>
                 </configuration>
             </plugin>
         </plugins>

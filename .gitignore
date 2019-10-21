@@ -37,3 +37,4 @@ logs
 *.versionsBackup
 pkg/
 .DS_Store
+release.properties
