@@ -5,7 +5,7 @@
 PID_FILE=proxy.pid
 JAVA_OPTS=
 JAR_NAME=proxy-application-1.0-SNAPSHOT.jar
-START_CMD="java $JAVA_OPTS -jar ./proxy-application-1.0-SNAPSHOT.jar"
+START_CMD="java $JAVA_OPTS -jar $JAR_NAME"
 
 pid=
 status(){
