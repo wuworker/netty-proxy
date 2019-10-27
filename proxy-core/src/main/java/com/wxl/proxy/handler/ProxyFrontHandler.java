@@ -6,7 +6,8 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.socket.SocketChannel;
 
-import static com.wxl.proxy.server.ProxyServer.*;
+import static com.wxl.proxy.server.ProxyServer.ATTR_FRONT_CHANNEL;
+import static com.wxl.proxy.server.ProxyServer.ATTR_PROXY_NAME;
 
 /**
  * Create by wuxingle on 2019/9/1

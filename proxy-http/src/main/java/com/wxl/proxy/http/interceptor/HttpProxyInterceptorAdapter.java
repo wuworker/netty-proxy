@@ -10,12 +10,12 @@ import io.netty.handler.codec.http.HttpObject;
 public class HttpProxyInterceptorAdapter implements HttpProxyInterceptor<HttpObject, HttpObject> {
 
     @Override
-    public void beforeRequest(Channel inboundChannel, Channel outboundChannel, HttpObject request, HttpProxyInterceptorPipeline pipeline) throws Exception{
+    public void beforeRequest(Channel inboundChannel, Channel outboundChannel, HttpObject request, HttpProxyInterceptorPipeline pipeline) throws Exception {
         pipeline.beforeRequest(inboundChannel, outboundChannel, request);
     }
 
     @Override
-    public void afterResponse(Channel inboundChannel, Channel outboundChannel, HttpObject response, HttpProxyInterceptorPipeline pipeline) throws Exception{
+    public void afterResponse(Channel inboundChannel, Channel outboundChannel, HttpObject response, HttpProxyInterceptorPipeline pipeline) throws Exception {
         pipeline.afterResponse(inboundChannel, outboundChannel, response);
     }
 }

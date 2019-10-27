@@ -3,26 +3,18 @@ package com.wxl.proxy.server;
 import com.wxl.proxy.handler.ProxyChannelInitializer;
 import com.wxl.proxy.log.ServerLoggingHandler;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.*;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.ServerSocketChannel;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioServerSocketChannel;
-import org.springframework.util.Assert;
 
 /**
  * Create by wuxingle on 2019/8/23
  * 代理服务器基本框架
  * 默认autoRead false
  */
-public abstract class AbstractProxyServer<T extends ProxyConfig> implements ProxyServer<T> {
-
-    private final EventLoopGroup boosGroup;
-
-    private final EventLoopGroup workGroup;
-
-    private boolean running;
-
-    private Channel serverChannel;
+public abstract class AbstractProxyServer<T extends ProxyConfig>
+        extends AbstractSimpleServer implements ProxyServer<T> {
 
     private ProxyChannelInitializer<ServerSocketChannel, T> serverInitializer;
 
@@ -35,13 +27,8 @@ public abstract class AbstractProxyServer<T extends ProxyConfig> implements Prox
     public AbstractProxyServer(T config,
                                EventLoopGroup boosGroup,
                                EventLoopGroup workGroup) {
-        Assert.notNull(workGroup, "config can not null!");
-        Assert.notNull(boosGroup, "boss event loop group can not null!");
-        Assert.notNull(workGroup, "work event loop group can not null!");
-
+        super(config.getBindPort(), boosGroup, workGroup);
         this.config = config;
-        this.boosGroup = boosGroup;
-        this.workGroup = workGroup;
     }
 
     @Override
@@ -50,63 +37,13 @@ public abstract class AbstractProxyServer<T extends ProxyConfig> implements Prox
     }
 
     @Override
-    public final void start() {
-        try {
-            ServerBootstrap bootstrap = new ServerBootstrap();
-            bootstrap.group(boosGroup, workGroup)
-                    .channel(NioServerSocketChannel.class)
-                    .handler(new ChannelInitializer<ServerSocketChannel>() {
-                        @Override
-                        protected void initChannel(ServerSocketChannel ch) throws Exception {
-                            initServerChannel(ch);
-                            if (serverInitializer != null) {
-                                serverInitializer.init(ch, config);
-                            }
-                        }
-                    })
-                    .childAttr(ATTR_PROXY_NAME, config.getServerName())
-                    .childOption(ChannelOption.AUTO_READ, false)
-                    .childHandler(new ChannelInitializer<SocketChannel>() {
-                        @Override
-                        protected void initChannel(SocketChannel ch) throws Exception {
-                            initClientChannel(ch, backendInitializer);
-                            if (frontInitializer != null) {
-                                frontInitializer.init(ch, config);
-                            }
-                        }
-                    });
-
-            configBootstrap(bootstrap);
-
-            ChannelFuture future = bootstrap.bind(config.getBindPort()).sync();
-            serverChannel = future.channel();
-            running = true;
-        } catch (Exception e) {
-            running = false;
-            throw new IllegalStateException(e);
-        } finally {
-            if (!running) {
-                stop();
-            }
-        }
-    }
-
-    @Override
-    public final void stop() {
-        if (serverChannel != null) {
-            serverChannel.close().syncUninterruptibly();
-        }
-        running = false;
-    }
-
-    @Override
-    public final boolean isRunning() {
-        return running;
-    }
-
-    @Override
     public String name() {
         return config.getServerName();
+    }
+
+    @Override
+    public int bindPort() {
+        return config.getBindPort();
     }
 
     @Override
@@ -127,15 +64,26 @@ public abstract class AbstractProxyServer<T extends ProxyConfig> implements Prox
     /**
      * 其他配置
      */
+    @Override
     protected void configBootstrap(ServerBootstrap bootstrap) {
-
+        bootstrap.childAttr(ATTR_PROXY_NAME, config.getServerName())
+                .childOption(ChannelOption.AUTO_READ, false);
     }
 
     /**
      * server channel handler 初始化
      */
+    @Override
     protected void initServerChannel(ServerSocketChannel ch) throws Exception {
         ch.pipeline().addLast(new ServerLoggingHandler(config.getServerName()));
+        if (serverInitializer != null) {
+            serverInitializer.init(ch, config);
+        }
+    }
+
+    @Override
+    protected final void initClientChannel(SocketChannel ch) throws Exception {
+        initClientChannel(ch, backendInitializer);
     }
 
     /**
@@ -143,7 +91,9 @@ public abstract class AbstractProxyServer<T extends ProxyConfig> implements Prox
      */
     protected void initClientChannel(SocketChannel ch, ProxyChannelInitializer<SocketChannel, T> backendInitializer)
             throws Exception {
-
+        if (frontInitializer != null) {
+            frontInitializer.init(ch, config);
+        }
     }
 
 }

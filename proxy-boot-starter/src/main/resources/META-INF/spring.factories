@@ -4,8 +4,8 @@ org.springframework.context.ApplicationListener=\
 # Failure Analyzers
 org.springframework.boot.diagnostics.FailureAnalyzer=\
   com.wxl.proxy.autoconfig.exception.BeanConfigFailureAnalyzer
-
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
   com.wxl.proxy.autoconfig.server.ProxyServerAutoConfiguration,\
   com.wxl.proxy.autoconfig.http.HttpProxyAutoConfiguration,\
-  com.wxl.proxy.autoconfig.tcp.TcpProxyAutoConfiguration
+  com.wxl.proxy.autoconfig.tcp.TcpProxyAutoConfiguration,\
+  com.wxl.proxy.autoconfig.admin.AdminServerAutoConfiguration

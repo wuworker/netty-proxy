@@ -20,7 +20,7 @@ public class HttpProxyProperties {
 
     private String name = "http-proxy";
 
-    private boolean enabled = false;
+    private boolean enabled = true;
 
     private Integer bindPort;
 

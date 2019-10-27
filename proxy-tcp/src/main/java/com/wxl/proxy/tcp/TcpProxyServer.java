@@ -25,6 +25,7 @@ public class TcpProxyServer extends AbstractProxyServer<TcpProxyConfig> {
     @Override
     protected void initClientChannel(SocketChannel ch, ProxyChannelInitializer<SocketChannel, TcpProxyConfig> backendInitializer)
             throws Exception {
+        super.initClientChannel(ch, backendInitializer);
         TcpProxyFrontHandler frontHandler = new TcpProxyFrontHandler(getConfig(), backendInitializer);
         ch.pipeline().addLast(TcpProxyFrontHandler.class.getName(), logHandler(frontHandler));
     }

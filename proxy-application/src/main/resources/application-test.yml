@@ -7,25 +7,24 @@ logging:
 proxy:
   boss-threads: 0
   work-threads: 0
+  admin:
+    enabled: true
+    bind-port: 23456
   tcp:
-    enabled: false
+    enabled: true
     server:
       mysql-proxy:
-        bind-port: 8888
+        bind-port: 13306
         remote-host: localhost
         remote-port: 3306
-      redis-proxy:
-        bind-port: 9998
-        remote-host: localhost
-        remote-port: 6379
   http:
     enabled: true
     log: false
     bind-port: 8888
     connect-timeout: 5s
-    ssl:
-      ca-cert-path: 'classpath:ssl/root_ca.cer'
-      ca-private-key-path: 'classpath:ssl/ca_private.der'
+#    ssl:
+#      ca-cert-path: 'classpath:ssl/root_ca.cer'
+#      ca-private-key-path: 'classpath:ssl/ca_private.der'
 #    second-proxy:
 #      host: localhost
 #      port: 1080

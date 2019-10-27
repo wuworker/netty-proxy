@@ -10,14 +10,13 @@ import io.netty.channel.socket.ServerSocketChannel;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.util.AttributeKey;
 import io.netty.util.internal.SystemPropertyUtil;
-import org.springframework.context.Lifecycle;
 
 
 /**
  * Create by wuxingle on 2019/8/23
  * 代理服务器
  */
-public interface ProxyServer<T extends ProxyConfig> extends Lifecycle {
+public interface ProxyServer<T extends ProxyConfig> extends SimpleServer {
 
     boolean LOG_CONNECT_ID = SystemPropertyUtil.getBoolean(
             "proxy.log.connectId", true);
@@ -26,8 +25,6 @@ public interface ProxyServer<T extends ProxyConfig> extends Lifecycle {
     AttributeKey<String> ATTR_PROXY_NAME = AttributeKey.valueOf("proxyName");
     AttributeKey<Channel> ATTR_FRONT_CHANNEL = AttributeKey.valueOf("frontChannel");
     AttributeKey<Channel> ATTR_BACKEND_CHANNEL = AttributeKey.valueOf("backendChannel");
-
-    String name();
 
     T getConfig();
 

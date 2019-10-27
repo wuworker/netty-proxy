@@ -94,7 +94,7 @@ public class HttpProxyServerTest {
                                               HttpObject request,
                                               HttpProxyInterceptorPipeline pipeline) throws Exception {
                         System.out.println(request);
-                        pipeline.beforeRequest(inboundChannel,outboundChannel,request);
+                        pipeline.beforeRequest(inboundChannel, outboundChannel, request);
                     }
 
                     @Override
@@ -103,7 +103,7 @@ public class HttpProxyServerTest {
                                               HttpObject response,
                                               HttpProxyInterceptorPipeline pipeline) throws Exception {
                         System.out.println(response);
-                        pipeline.afterResponse(inboundChannel,outboundChannel,response);
+                        pipeline.afterResponse(inboundChannel, outboundChannel, response);
                     }
                 })
         );

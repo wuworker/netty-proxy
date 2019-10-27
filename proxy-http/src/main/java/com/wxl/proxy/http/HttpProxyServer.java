@@ -36,6 +36,7 @@ public class HttpProxyServer extends AbstractProxyServer<HttpProxyConfig> implem
     @Override
     protected void initClientChannel(SocketChannel ch, ProxyChannelInitializer<SocketChannel, HttpProxyConfig> backendInitializer)
             throws Exception {
+        super.initClientChannel(ch, backendInitializer);
         HttpProxyFrontHandler frontHandler = new HttpProxyFrontHandler(getConfig(), backendInitializer, interceptorInitializer);
         ch.pipeline().addFirst(HttpServerCodec.class.getName(), new HttpServerCodec())
                 .addLast(HttpProxyFrontHandler.class.getName(), logHandler(frontHandler));

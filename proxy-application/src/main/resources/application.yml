@@ -4,3 +4,6 @@ spring:
   pid:
     file: proxy.pid
 
+proxy:
+  admin:
+    bind-port: 23456

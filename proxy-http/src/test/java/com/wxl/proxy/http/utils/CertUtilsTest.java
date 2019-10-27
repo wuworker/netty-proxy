@@ -12,8 +12,6 @@ import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.Date;
 
-import static org.junit.Assert.*;
-
 /**
  * Create by wuxingle on 2019/10/15
  */
@@ -26,7 +24,7 @@ public class CertUtilsTest {
     }
 
     @Test
-    public void testLoadCa() throws Exception{
+    public void testLoadCa() throws Exception {
         X509Certificate cert = CertUtils.loadCert(new ClassPathResource("test_ca.cer"));
         System.out.println(cert.getIssuerDN());
         System.out.println(CertUtils.getIssuer(cert));
