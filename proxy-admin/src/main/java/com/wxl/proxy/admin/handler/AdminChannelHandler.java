@@ -2,6 +2,7 @@ package com.wxl.proxy.admin.handler;
 
 import com.wxl.proxy.admin.SpringChannelInboundHandler;
 import com.wxl.proxy.admin.cmd.*;
+import com.wxl.proxy.admin.cmd.result.TableResult;
 import com.wxl.proxy.server.ProxyServer;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.DecoderException;
@@ -13,6 +14,8 @@ import org.springframework.util.StringUtils;
 import java.util.Collection;
 import java.util.Map;
 
+import static com.wxl.proxy.ProxySystemConstants.DEFAULT_LINE_SPLIT;
+
 /**
  * Create by wuxingle on 2019/10/26
  * telnet命令处理
@@ -20,11 +23,14 @@ import java.util.Map;
 @Slf4j
 public class AdminChannelHandler extends SpringChannelInboundHandler {
 
-    private static final String HELLO_MESSAGE = "Welcome to Use Proxy Server!\n";
+    private static final String BANNER_MESSAGE = "===============================" + DEFAULT_LINE_SPLIT
+            + "| Welcome to Use Proxy Server |" + DEFAULT_LINE_SPLIT
+            + "===============================" + DEFAULT_LINE_SPLIT
+            + "useful command is list:" + DEFAULT_LINE_SPLIT;
 
     private String tips;
 
-    private CommandContext commandContext;
+    private AmdContext amdContext;
 
     public AdminChannelHandler() {
     }
@@ -36,9 +42,23 @@ public class AdminChannelHandler extends SpringChannelInboundHandler {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         log.debug("channel is active:{}", ctx.channel().remoteAddress());
-        commandContext = new DefaultCommandContext(applicationContext);
+        amdContext = new DefaultAmdContext(applicationContext);
 
-        ctx.write(HELLO_MESSAGE);
+        ctx.write(BANNER_MESSAGE);
+
+        AmdRegistry amdRegistry = applicationContext.getBean(AmdRegistry.class);
+        Map<String, AmdDefinition> definitions = amdRegistry.getAllDefinitions();
+
+        TableResult result = new TableResult();
+        result.setTitle("command", "description");
+        for (Map.Entry<String, AmdDefinition> entry : definitions.entrySet()) {
+            result.nextRow().addColumn(entry.getKey())
+                    .addColumn(entry.getValue().description());
+        }
+
+        ctx.write(result.toString());
+        ctx.write(DEFAULT_LINE_SPLIT);
+        ctx.write(DEFAULT_LINE_SPLIT);
         ctx.write(tips);
         ctx.flush();
     }
@@ -51,15 +71,14 @@ public class AdminChannelHandler extends SpringChannelInboundHandler {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        AdminCommand cmd = (AdminCommand) msg;
-        AdminCommandResult result = cmd.invoke(commandContext);
+        Amd cmd = (Amd) msg;
 
-        String res = result.format();
+        AmdResult result = cmd.invoke(amdContext);
+
+        String res = result.toString();
         if (StringUtils.hasText(res)) {
             ctx.write(res);
-            if (!res.endsWith("\n")) {
-                ctx.write("\n");
-            }
+            ctx.write(DEFAULT_LINE_SPLIT);
         }
 
         if (StringUtils.hasText(tips)) {
@@ -75,28 +94,31 @@ public class AdminChannelHandler extends SpringChannelInboundHandler {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         if (cause instanceof TooLongFrameException) {
-            ctx.writeAndFlush(cause.getMessage() + "\n");
+            ctx.writeAndFlush(cause.getMessage() + DEFAULT_LINE_SPLIT);
         } else if (cause instanceof DecoderException) {
             Throwable realCause = cause.getCause();
-            if (realCause instanceof CommandParseException) {
-                ctx.writeAndFlush(realCause.getMessage() + "\n");
+            if (realCause instanceof AmdParseException) {
+                ctx.writeAndFlush(realCause.getMessage() + DEFAULT_LINE_SPLIT);
             } else {
-                ctx.writeAndFlush("cmdLine is illegal!\n");
+                ctx.writeAndFlush("cmdLine is illegal!" + DEFAULT_LINE_SPLIT);
             }
-        } else if (cause instanceof CommandInvokeException) {
-            ctx.writeAndFlush("server error!" + cause.getMessage() + "\n");
+        } else if (cause instanceof AmdInvokeException) {
+            ctx.writeAndFlush("server error!" + cause.getMessage() + DEFAULT_LINE_SPLIT);
         } else {
             log.error("'{}' handler cause exception",
                     ctx.channel().remoteAddress(), cause);
         }
     }
 
-    static class DefaultCommandContext implements CommandContext {
+    static class DefaultAmdContext implements AmdContext {
+
+        private AmdFormatter amdFormatter;
 
         private ApplicationContext applicationContext;
 
-        public DefaultCommandContext(ApplicationContext applicationContext) {
+        public DefaultAmdContext(ApplicationContext applicationContext) {
             this.applicationContext = applicationContext;
+            this.amdFormatter = applicationContext.getBean(AmdFormatter.class);
         }
 
         @Override
@@ -106,8 +128,8 @@ public class AdminChannelHandler extends SpringChannelInboundHandler {
         }
 
         @Override
-        public AdminCommandFormatter formatter() {
-            return applicationContext.getBean(AdminCommandFormatter.class);
+        public AmdFormatter formatter() {
+            return amdFormatter;
         }
     }
 

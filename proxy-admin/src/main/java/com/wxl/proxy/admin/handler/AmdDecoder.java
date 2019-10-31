@@ -1,8 +1,8 @@
 package com.wxl.proxy.admin.handler;
 
-import com.wxl.proxy.admin.cmd.AdminCommand;
-import com.wxl.proxy.admin.cmd.AdminCommandParser;
-import com.wxl.proxy.admin.cmd.impl.NoOpCommand;
+import com.wxl.proxy.admin.cmd.Amd;
+import com.wxl.proxy.admin.cmd.AmdParser;
+import com.wxl.proxy.admin.cmd.impl.NoOpAmd;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
@@ -15,21 +15,21 @@ import java.util.List;
  * 管理员命令decoder
  */
 @ChannelHandler.Sharable
-public class AdminCommandDecoder extends MessageToMessageDecoder<String> {
+public class AmdDecoder extends MessageToMessageDecoder<String> {
 
-    private AdminCommandParser parser;
+    private AmdParser parser;
 
-    public AdminCommandDecoder(AdminCommandParser parser) {
+    public AmdDecoder(AmdParser parser) {
         this.parser = parser;
     }
 
     @Override
     protected void decode(ChannelHandlerContext ctx, String msg, List<Object> out) throws Exception {
         if (StringUtils.hasText(msg)) {
-            AdminCommand cmd = parser.parse(msg);
+            Amd cmd = parser.parse(msg);
             out.add(cmd);
         } else {
-            out.add(new NoOpCommand());
+            out.add(new NoOpAmd());
         }
     }
 }

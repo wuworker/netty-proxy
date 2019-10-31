@@ -4,6 +4,10 @@ import com.wxl.proxy.admin.AdminTelnetServer;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import static com.wxl.proxy.autoconfig.server.ProxyProperties.PROXY_PREFIX;
 
 /**
@@ -23,6 +27,10 @@ public class AdminServerProperties {
     private String tips = "admin> ";
 
     private int maxCmdLength = 1024;
+
+    private List<String> amdBasePackages = Collections.singletonList("com.wxl.proxy.admin.cmd.impl");
+
+    private List<String> amdAddBasePackages = new ArrayList<>();
 
     private String serverName = AdminTelnetServer.DEFAULT_SERVER_NAME;
 

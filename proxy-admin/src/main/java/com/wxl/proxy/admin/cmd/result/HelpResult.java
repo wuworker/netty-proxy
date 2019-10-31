@@ -1,34 +1,37 @@
 package com.wxl.proxy.admin.cmd.result;
 
-import com.wxl.proxy.admin.cmd.AdminCommand;
-import com.wxl.proxy.admin.cmd.AdminCommandFormatter;
-import com.wxl.proxy.admin.cmd.AdminCommandResult;
-import com.wxl.proxy.admin.cmd.DefaultAdminCommandFormatter;
+import com.wxl.proxy.admin.cmd.AmdDefinition;
+import com.wxl.proxy.admin.cmd.AmdFormatter;
+import com.wxl.proxy.admin.cmd.AmdResult;
+import com.wxl.proxy.admin.cmd.DefaultAmdFormatter;
 import org.springframework.util.Assert;
 
 /**
  * Create by wuxingle on 2019/10/27
  * 帮助结果
  */
-public class HelpResult implements AdminCommandResult {
+public class HelpResult implements AmdResult {
 
-    private AdminCommandFormatter formatter;
+    private String name;
 
-    private AdminCommand command;
+    private AmdFormatter formatter;
 
-    public HelpResult(AdminCommand command) {
-        this(new DefaultAdminCommandFormatter(), command);
+    private AmdDefinition definition;
+
+    public HelpResult(String name, AmdDefinition definition) {
+        this(name, definition, new DefaultAmdFormatter());
     }
 
-    public HelpResult(AdminCommandFormatter formatter, AdminCommand command) {
+    public HelpResult(String name, AmdDefinition definition, AmdFormatter formatter) {
+        Assert.notNull(definition, "command definition can not null");
         Assert.notNull(formatter, "formatter can not null");
-        Assert.notNull(command, "command can not null");
+        this.name = name;
         this.formatter = formatter;
-        this.command = command;
+        this.definition = definition;
     }
 
     @Override
-    public String format() {
-        return formatter.format(command);
+    public String toString() {
+        return formatter.format(name, definition).trim();
     }
 }

@@ -1,6 +1,6 @@
 package com.wxl.proxy.admin.handler;
 
-import com.wxl.proxy.admin.cmd.AdminCommandParser;
+import com.wxl.proxy.admin.cmd.AmdParser;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.DelimiterBasedFrameDecoder;
@@ -9,7 +9,7 @@ import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import org.springframework.util.Assert;
 
-import java.nio.charset.StandardCharsets;
+import static com.wxl.proxy.ProxySystemConstants.DEFAULT_CHARSET;
 
 /**
  * Create by wuxingle on 2019/10/27
@@ -17,7 +17,7 @@ import java.nio.charset.StandardCharsets;
  */
 public class AdminChannelInitializer {
 
-    private static final String DEFAULT_TIPES = "> ";
+    private static final String DEFAULT_TIPS = "> ";
 
     private static final int DEFAULT_CMD_MAX_LEN = 1024;
 
@@ -29,21 +29,21 @@ public class AdminChannelInitializer {
 
     private StringEncoder encoder;
 
-    private AdminCommandDecoder commandDecoder;
+    private AmdDecoder commandDecoder;
 
-    public AdminChannelInitializer(AdminCommandParser commandParser) {
-        this(DEFAULT_CMD_MAX_LEN, "> ", commandParser);
+    public AdminChannelInitializer(AmdParser amdParser) {
+        this(DEFAULT_CMD_MAX_LEN, DEFAULT_TIPS, amdParser);
     }
 
     public AdminChannelInitializer(int cmdMaxLen, String tips,
-                                   AdminCommandParser commandParser) {
+                                   AmdParser amdParser) {
         Assert.isTrue(cmdMaxLen > 0, "cmd maxLen must is > 0!");
-        Assert.notNull(commandParser, "parser can not null!");
+        Assert.notNull(amdParser, "parser can not null!");
         this.cmdMaxLen = cmdMaxLen;
         this.tips = tips;
-        this.decoder = new StringDecoder(StandardCharsets.UTF_8);
-        this.encoder = new StringEncoder(StandardCharsets.UTF_8);
-        this.commandDecoder = new AdminCommandDecoder(commandParser);
+        this.decoder = new StringDecoder(DEFAULT_CHARSET);
+        this.encoder = new StringEncoder(DEFAULT_CHARSET);
+        this.commandDecoder = new AmdDecoder(amdParser);
     }
 
     public void initChannel(SocketChannel ch) throws Exception {

@@ -8,7 +8,7 @@ import java.util.Collection;
  * Create by wuxingle on 2019/10/26
  * 命令执行上下文
  */
-public interface CommandContext {
+public interface AmdContext {
 
     /**
      * 代理服务列表
@@ -18,5 +18,5 @@ public interface CommandContext {
     /**
      * 命令格式工具
      */
-    AdminCommandFormatter formatter();
+    AmdFormatter formatter();
 }

@@ -2,6 +2,7 @@ package com.wxl.proxy.autoconfig.admin;
 
 import com.wxl.proxy.admin.AdminTelnetServer;
 import com.wxl.proxy.admin.cmd.*;
+import com.wxl.proxy.admin.cmd.annotation.AmdClassPathScanner;
 import com.wxl.proxy.admin.handler.AdminChannelInitializer;
 import com.wxl.proxy.autoconfig.exception.BeanConfigException;
 import com.wxl.proxy.autoconfig.server.EventLoopGroupManager;
@@ -12,6 +13,12 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.CollectionUtils;
+
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.wxl.proxy.autoconfig.admin.AdminServerProperties.ADMIN_SERVER_PREFIX;
 
@@ -37,7 +44,7 @@ public class AdminServerAutoConfiguration {
      */
     @Bean
     @ConditionalOnMissingBean
-    public AdminChannelInitializer adminChannelInitializer(AdminCommandParser parser) {
+    public AdminChannelInitializer adminChannelInitializer(AmdParser parser) {
         int maxCmdLength = properties.getMaxCmdLength();
         String tips = properties.getTips();
         return new AdminChannelInitializer(maxCmdLength, tips, parser);
@@ -61,8 +68,8 @@ public class AdminServerAutoConfiguration {
      */
     @Bean
     @ConditionalOnMissingBean
-    public AdminCommandFormatter adminCommandFormatter() {
-        return new DefaultAdminCommandFormatter();
+    public AmdFormatter amdFormatter() {
+        return new DefaultAmdFormatter();
     }
 
     /**
@@ -70,8 +77,8 @@ public class AdminServerAutoConfiguration {
      */
     @Bean
     @ConditionalOnMissingBean
-    public AdminCommandFactoryRegister adminCommandFactoryRegister() {
-        return new DefaultCommandFactoryRegister();
+    public AmdRegistry amdRegistry() {
+        return new DefaultAmdRegistry();
     }
 
     /**
@@ -79,9 +86,25 @@ public class AdminServerAutoConfiguration {
      */
     @Bean
     @ConditionalOnMissingBean
-    public AdminCommandParser adminCommandParser(AdminCommandFactoryRegister register) {
-        return new DefaultAdminCommandParser(register);
+    public AmdParser amdParser(AmdRegistry register) {
+        return new DefaultAmdParser(register);
     }
 
-
+    /**
+     * 扫描命令类
+     */
+    @Bean(initMethod = "scan")
+    @ConditionalOnMissingBean
+    public AmdClassPathScanner amdClassPathScanner(AmdRegistry registry) {
+        List<String> amdBasePackages = properties.getAmdBasePackages();
+        List<String> amdAddBasePackages = properties.getAmdAddBasePackages();
+        Set<String> packages = new LinkedHashSet<>();
+        if (!CollectionUtils.isEmpty(amdBasePackages)) {
+            packages.addAll(amdBasePackages);
+        }
+        if (!CollectionUtils.isEmpty(amdAddBasePackages)) {
+            packages.addAll(amdAddBasePackages);
+        }
+        return new AmdClassPathScanner(registry, new ArrayList<>(packages));
+    }
 }

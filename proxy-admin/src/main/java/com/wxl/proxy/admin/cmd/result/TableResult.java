@@ -1,14 +1,17 @@
 package com.wxl.proxy.admin.cmd.result;
 
-import com.wxl.proxy.admin.cmd.AdminCommandResult;
+import com.wxl.proxy.admin.cmd.AmdResult;
+import org.springframework.util.CollectionUtils;
 
 import java.util.*;
+
+import static com.wxl.proxy.ProxySystemConstants.DEFAULT_LINE_SPLIT;
 
 /**
  * Create by wuxingle on 2019/10/27
  * 显示表格结果
  */
-public class TableResult implements AdminCommandResult {
+public class TableResult implements AmdResult {
 
     private String columnSplit;
 
@@ -97,7 +100,7 @@ public class TableResult implements AdminCommandResult {
 
 
     @Override
-    public String format() {
+    public String toString() {
         int columns = title.size();
         for (List<String> row : tables) {
             if (row.size() > columns) {
@@ -123,11 +126,19 @@ public class TableResult implements AdminCommandResult {
 
         StringBuilder sb = new StringBuilder();
         appendRow(sb, title, columnMaxLen);
-        sb.append(LINE_SEPARATOR);
-        for (List<String> table : tables) {
-            appendRow(sb, table, columnMaxLen);
-            sb.append(LINE_SEPARATOR);
+
+        if (!CollectionUtils.isEmpty(tables)) {
+            sb.append(DEFAULT_LINE_SPLIT);
+            Iterator<List<String>> it = tables.iterator();
+            while (it.hasNext()) {
+                List<String> table = it.next();
+                appendRow(sb, table, columnMaxLen);
+                if (it.hasNext()) {
+                    sb.append(DEFAULT_LINE_SPLIT);
+                }
+            }
         }
+
         return sb.toString();
     }
 

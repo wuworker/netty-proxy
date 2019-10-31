@@ -1,16 +1,18 @@
 package com.wxl.proxy.admin.cmd.result;
 
-import com.wxl.proxy.admin.cmd.AdminCommandResult;
+import com.wxl.proxy.admin.cmd.AmdResult;
 import org.springframework.util.CollectionUtils;
 
 import java.util.Collection;
 import java.util.stream.Collectors;
 
+import static com.wxl.proxy.ProxySystemConstants.DEFAULT_LINE_SPLIT;
+
 /**
  * Create by wuxingle on 2019/10/27
  * 列表结果
  */
-public class ListResult implements AdminCommandResult {
+public class ListResult implements AmdResult {
 
     private Collection<String> list;
 
@@ -19,10 +21,10 @@ public class ListResult implements AdminCommandResult {
     }
 
     @Override
-    public String format() {
+    public String toString() {
         if (CollectionUtils.isEmpty(list)) {
-            return LINE_SEPARATOR;
+            return DEFAULT_LINE_SPLIT;
         }
-        return list.stream().collect(Collectors.joining(LINE_SEPARATOR));
+        return list.stream().collect(Collectors.joining(DEFAULT_LINE_SPLIT));
     }
 }
