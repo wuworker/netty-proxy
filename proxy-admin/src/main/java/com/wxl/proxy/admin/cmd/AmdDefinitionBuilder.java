@@ -8,10 +8,12 @@ import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.StandardAnnotationMetadata;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+import org.springframework.util.ReflectionUtils;
+import org.springframework.util.StringUtils;
 
+import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
 
 /**
  * Create by wuxingle on 2019/10/31
@@ -81,40 +83,60 @@ public class AmdDefinitionBuilder {
             throw new IllegalStateException("amd must annotate @Aommand:" + type);
         }
 
-        boolean supportCmdLine = ClassUtils.hasConstructor(type, String.class, CommandLine.class);
-        if (!supportCmdLine && !ClassUtils.hasConstructor(type, String.class)) {
-            throw new IllegalStateException("amd constructor must is (String.class) " +
-                    "or (String.class,CommandLine.class)");
+        boolean supportCmdLine = ClassUtils.hasConstructor(type, CommandLine.class);
+        if (!supportCmdLine && !ClassUtils.hasConstructor(type)) {
+            throw new IllegalStateException("amd '" + type + "' constructor must is empty parameter " +
+                    "or only one parameter 'CommandLine.class'");
         }
 
         AnnotationAttributes attributes = AnnotationAttributes.fromMap(
                 metadata.getAnnotationAttributes(Aommand.class.getName()));
 
+        String name = attributes.getString("name");
         String desc = attributes.getString("desc");
-        Class<? extends Supplier<Options>> options = attributes.getClass("options");
-        Supplier<Options> supplier;
-        try {
-            supplier = options.newInstance();
-        } catch (InstantiationException | IllegalAccessException e) {
-            throw new IllegalStateException("create amd options fail! " + options, e);
+        boolean requireArgs = attributes.getBoolean("requireArgs");
+        String usage = attributes.getString("usage");
+
+        Options options = null;
+        String optionsMethod = attributes.getString("optionsMethod");
+        if (StringUtils.hasText(optionsMethod)) {
+            Method method = ReflectionUtils.findMethod(type, optionsMethod);
+            if (method == null) {
+                throw new IllegalStateException("amd '" + type + "' optionsMethod '" + optionsMethod + "' can not find!");
+            }
+            options = (Options) ReflectionUtils.invokeMethod(method, null);
         }
 
-        return custom().type(type)
+        return custom().name(name)
+                .type(type)
                 .description(desc)
-                .options(supplier)
+                .options(options)
                 .supportCmdline(supportCmdLine)
+                .requireArgs(requireArgs)
+                .usage(usage)
                 .build();
     }
+
+    private String name;
 
     private String description;
 
     private Class<? extends Amd> type;
 
-    private Supplier<Options> options;
+    private Options options;
 
     private boolean supportCmdline;
 
+    private boolean requireArgs;
+
+    private String usage;
+
     public AmdDefinitionBuilder() {
+    }
+
+    public AmdDefinitionBuilder name(String name) {
+        this.name = name;
+        return this;
     }
 
     public AmdDefinitionBuilder description(String description) {
@@ -127,7 +149,7 @@ public class AmdDefinitionBuilder {
         return this;
     }
 
-    public AmdDefinitionBuilder options(Supplier<Options> options) {
+    public AmdDefinitionBuilder options(Options options) {
         this.options = options;
         return this;
     }
@@ -137,7 +159,18 @@ public class AmdDefinitionBuilder {
         return this;
     }
 
+    public AmdDefinitionBuilder requireArgs(boolean requireArgs) {
+        this.requireArgs = requireArgs;
+        return this;
+    }
+
+    public AmdDefinitionBuilder usage(String usage) {
+        this.usage = usage;
+        return this;
+    }
+
     public AmdDefinition build() {
-        return new DefaultAmdDefinition(description, type, options, supportCmdline);
+        return new DefaultAmdDefinition(name, description, type,
+                options, supportCmdline, usage, requireArgs);
     }
 }

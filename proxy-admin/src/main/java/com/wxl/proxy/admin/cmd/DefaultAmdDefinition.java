@@ -1,10 +1,7 @@
 package com.wxl.proxy.admin.cmd;
 
-import com.wxl.proxy.admin.cmd.annotation.EmptyOptionsSupplier;
 import org.apache.commons.cli.Options;
 import org.springframework.util.Assert;
-
-import java.util.function.Supplier;
 
 /**
  * Create by wuxingle on 2019/10/30
@@ -12,29 +9,43 @@ import java.util.function.Supplier;
  */
 public class DefaultAmdDefinition implements AmdDefinition {
 
+    private String name;
+
     private String description;
 
     private Class<? extends Amd> type;
 
-    private Supplier<Options> options;
+    private Options options;
 
     private boolean supportCmdline;
 
-    DefaultAmdDefinition(Class<? extends Amd> type) {
-        this("", type, null, false);
+    private String usage;
+
+    private boolean requireArgs;
+
+    DefaultAmdDefinition(String name, Class<? extends Amd> type) {
+        this(name, "", type, null, false, "", false);
     }
 
-    DefaultAmdDefinition(String description, Class<? extends Amd> type,
-                         Supplier<Options> options, boolean supportCmdline) {
+    DefaultAmdDefinition(String name, String description, Class<? extends Amd> type,
+                         Options options, boolean supportCmdline,
+                         String usage, boolean requireArgs) {
         Assert.notNull(type, "amd class can not null");
+        this.name = name;
         this.description = description == null ? "" : description;
         this.type = type;
         this.options = options;
         this.supportCmdline = supportCmdline;
+        this.usage = usage;
+        this.requireArgs = requireArgs;
+    }
 
-        if (this.options == null) {
-            this.options = new EmptyOptionsSupplier();
-        }
+    /**
+     * 命令名
+     */
+    @Override
+    public String name() {
+        return name;
     }
 
     /**
@@ -65,7 +76,23 @@ public class DefaultAmdDefinition implements AmdDefinition {
      * 命令选项
      */
     @Override
-    public Supplier<Options> options() {
+    public Options options() {
         return options;
+    }
+
+    /**
+     * 用法
+     */
+    @Override
+    public String usage() {
+        return usage;
+    }
+
+    /**
+     * 是否必须参数
+     */
+    @Override
+    public boolean requireArgs() {
+        return requireArgs;
     }
 }

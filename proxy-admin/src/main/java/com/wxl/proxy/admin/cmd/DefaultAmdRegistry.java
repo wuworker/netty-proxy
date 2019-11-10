@@ -1,9 +1,11 @@
 package com.wxl.proxy.admin.cmd;
 
 import org.springframework.core.SimpleAliasRegistry;
+import org.springframework.util.Assert;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 /**
  * Create by wuxingle on 2019/10/29
@@ -12,15 +14,20 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DefaultAmdRegistry extends SimpleAliasRegistry
         implements AmdRegistry {
 
-    private Map<String, AmdDefinition> registry = new ConcurrentHashMap<>();
+    private static final Pattern AMD_NAME_PATTERN = Pattern.compile("[a-zA-z_]+\\w*");
 
+    private Map<String, AmdDefinition> amdRegistry = new ConcurrentHashMap<>();
+
+    private final Map<String, String> aliasMap = new ConcurrentHashMap<>(16);
 
     /**
      * 注册命令
      */
     @Override
-    public void register(String name, AmdDefinition definition) {
-        AmdDefinition old = registry.putIfAbsent(name, definition);
+    public void register(AmdDefinition definition) {
+        checkDefinition(definition);
+        String name = definition.name();
+        AmdDefinition old = amdRegistry.putIfAbsent(name, definition);
         if (old != null) {
             throw new IllegalStateException("already has cmd named:" + name);
         }
@@ -31,7 +38,7 @@ public class DefaultAmdRegistry extends SimpleAliasRegistry
      */
     @Override
     public AmdDefinition getDefinition(String name) {
-        return registry.get(name);
+        return amdRegistry.get(name);
     }
 
     /**
@@ -39,7 +46,7 @@ public class DefaultAmdRegistry extends SimpleAliasRegistry
      */
     @Override
     public Optional<AmdDefinition> getSafeDefinition(String name) {
-        return Optional.ofNullable(registry.get(name));
+        return Optional.ofNullable(amdRegistry.get(name));
     }
 
     /**
@@ -47,7 +54,7 @@ public class DefaultAmdRegistry extends SimpleAliasRegistry
      */
     @Override
     public List<String> getAllNames() {
-        return new ArrayList<>(registry.keySet());
+        return new ArrayList<>(amdRegistry.keySet());
     }
 
     /**
@@ -55,7 +62,7 @@ public class DefaultAmdRegistry extends SimpleAliasRegistry
      */
     @Override
     public Map<String, AmdDefinition> getAllDefinitions() {
-        return Collections.unmodifiableMap(registry);
+        return Collections.unmodifiableMap(amdRegistry);
     }
 
     /**
@@ -63,6 +70,45 @@ public class DefaultAmdRegistry extends SimpleAliasRegistry
      */
     @Override
     public int getAmdCount() {
-        return registry.size();
+        return amdRegistry.size();
+    }
+
+    /**
+     * 获取所有别名
+     */
+    @Override
+    public List<String> getAllAlias() {
+        return new ArrayList<>(aliasMap.keySet());
+    }
+
+    @Override
+    public void registerAlias(String name, String alias) {
+        checkName(alias);
+        super.registerAlias(name, alias);
+        aliasMap.put(alias, name);
+    }
+
+    @Override
+    public void removeAlias(String alias) {
+        super.removeAlias(alias);
+        aliasMap.remove(alias);
+    }
+
+    @Override
+    protected boolean allowAliasOverriding() {
+        return true;
+    }
+
+    protected void checkName(String name) {
+        Assert.hasText(name, "amd name can not empty!");
+        boolean matches = AMD_NAME_PATTERN.matcher(name).matches();
+        if (!matches) {
+            throw new IllegalArgumentException("amd name must match [0-9a-zA-Z_] and not start with number!");
+        }
+    }
+
+    protected void checkDefinition(AmdDefinition definition) {
+        checkName(definition.name());
+        Assert.notNull(definition.type(), "amd definition type can not null");
     }
 }

@@ -47,11 +47,12 @@ public class AdminChannelInitializer {
     }
 
     public void initChannel(SocketChannel ch) throws Exception {
-        ch.pipeline().addLast(new DelimiterBasedFrameDecoder(cmdMaxLen, Delimiters.lineDelimiter()))
-                .addLast(decoder)
-                .addLast(commandDecoder)
-                .addLast(encoder)
-                .addLast(adminChannelHandler(tips));
+        ch.pipeline().addLast(DelimiterBasedFrameDecoder.class.getName(),
+                new DelimiterBasedFrameDecoder(cmdMaxLen, Delimiters.lineDelimiter()))
+                .addLast(StringDecoder.class.getName(), decoder)
+                .addLast(AmdDecoder.class.getName(), commandDecoder)
+                .addLast(StringEncoder.class.getName(), encoder)
+                .addLast(AdminChannelHandler.class.getName(), adminChannelHandler(tips));
 
     }
 

@@ -10,10 +10,24 @@ import java.nio.charset.Charset;
  */
 public abstract class ProxySystemConstants {
 
-
+    /**
+     * 默认编码
+     */
     public static final Charset DEFAULT_CHARSET = CharsetUtil.UTF_8;
 
-
+    /**
+     * 换行符
+     */
     public static final String DEFAULT_LINE_SPLIT = "\r\n";
+
+    /**
+     * 当前版本
+     */
+    public static final String PROXY_VERSION;
+
+
+    static {
+        PROXY_VERSION = ProxySystemConstants.class.getPackage().getImplementationVersion();
+    }
 
 }

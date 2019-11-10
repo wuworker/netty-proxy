@@ -3,7 +3,8 @@ package com.wxl.proxy.admin.handler;
 import com.wxl.proxy.admin.SpringChannelInboundHandler;
 import com.wxl.proxy.admin.cmd.*;
 import com.wxl.proxy.admin.cmd.result.TableResult;
-import com.wxl.proxy.server.ProxyServer;
+import com.wxl.proxy.admin.statistics.ProxyServerRegistry;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.TooLongFrameException;
@@ -11,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.StringUtils;
 
-import java.util.Collection;
 import java.util.Map;
 
 import static com.wxl.proxy.ProxySystemConstants.DEFAULT_LINE_SPLIT;
@@ -22,11 +22,6 @@ import static com.wxl.proxy.ProxySystemConstants.DEFAULT_LINE_SPLIT;
  */
 @Slf4j
 public class AdminChannelHandler extends SpringChannelInboundHandler {
-
-    private static final String BANNER_MESSAGE = "===============================" + DEFAULT_LINE_SPLIT
-            + "| Welcome to Use Proxy Server |" + DEFAULT_LINE_SPLIT
-            + "===============================" + DEFAULT_LINE_SPLIT
-            + "useful command is list:" + DEFAULT_LINE_SPLIT;
 
     private String tips;
 
@@ -42,9 +37,7 @@ public class AdminChannelHandler extends SpringChannelInboundHandler {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         log.debug("channel is active:{}", ctx.channel().remoteAddress());
-        amdContext = new DefaultAmdContext(applicationContext);
-
-        ctx.write(BANNER_MESSAGE);
+        amdContext = new DefaultAmdContext(ctx.channel(), applicationContext);
 
         AmdRegistry amdRegistry = applicationContext.getBean(AmdRegistry.class);
         Map<String, AmdDefinition> definitions = amdRegistry.getAllDefinitions();
@@ -94,42 +87,53 @@ public class AdminChannelHandler extends SpringChannelInboundHandler {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         if (cause instanceof TooLongFrameException) {
-            ctx.writeAndFlush(cause.getMessage() + DEFAULT_LINE_SPLIT);
+            ctx.write(cause.getMessage() + DEFAULT_LINE_SPLIT);
         } else if (cause instanceof DecoderException) {
             Throwable realCause = cause.getCause();
             if (realCause instanceof AmdParseException) {
-                ctx.writeAndFlush(realCause.getMessage() + DEFAULT_LINE_SPLIT);
+                ctx.write(realCause.getMessage() + DEFAULT_LINE_SPLIT);
             } else {
-                ctx.writeAndFlush("cmdLine is illegal!" + DEFAULT_LINE_SPLIT);
+                ctx.write("cmdLine is illegal!" + DEFAULT_LINE_SPLIT);
             }
         } else if (cause instanceof AmdInvokeException) {
-            ctx.writeAndFlush("server error!" + cause.getMessage() + DEFAULT_LINE_SPLIT);
+            ctx.write(cause.getMessage() + DEFAULT_LINE_SPLIT);
         } else {
             log.error("'{}' handler cause exception",
                     ctx.channel().remoteAddress(), cause);
+            ctx.write("server error!" + cause.getMessage() + DEFAULT_LINE_SPLIT);
+        }
+        if (StringUtils.hasText(tips)) {
+            ctx.write(tips);
         }
     }
 
-    static class DefaultAmdContext implements AmdContext {
+    static class DefaultAmdContext extends AbstractAmdContext {
 
-        private AmdFormatter amdFormatter;
+        private Channel channel;
 
-        private ApplicationContext applicationContext;
-
-        public DefaultAmdContext(ApplicationContext applicationContext) {
-            this.applicationContext = applicationContext;
-            this.amdFormatter = applicationContext.getBean(AmdFormatter.class);
+        public DefaultAmdContext(Channel channel, ApplicationContext applicationContext) {
+            super(applicationContext);
+            this.channel = channel;
         }
 
         @Override
-        public Collection<ProxyServer> proxyServers() {
-            Map<String, ProxyServer> beans = applicationContext.getBeansOfType(ProxyServer.class);
-            return beans.values();
+        public Channel channel() {
+            return channel;
         }
 
         @Override
-        public AmdFormatter formatter() {
-            return amdFormatter;
+        public ProxyServerRegistry getProxyServerRegistry() {
+            return getApplicationContext().getBean(ProxyServerRegistry.class);
+        }
+
+        @Override
+        public AmdFormatter getAmdFormatter() {
+            return getApplicationContext().getBean(AmdFormatter.class);
+        }
+
+        @Override
+        public AmdRegistry getAmdRegistry() {
+            return getApplicationContext().getBean(AmdRegistry.class);
         }
     }
 

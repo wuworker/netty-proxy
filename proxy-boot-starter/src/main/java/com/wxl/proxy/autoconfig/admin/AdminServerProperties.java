@@ -1,8 +1,10 @@
 package com.wxl.proxy.autoconfig.admin;
 
 import com.wxl.proxy.admin.AdminTelnetServer;
+import com.wxl.proxy.autoconfig.admin.handler.AdminBannerResource;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.core.io.Resource;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,6 +29,8 @@ public class AdminServerProperties {
     private String tips = "admin> ";
 
     private int maxCmdLength = 1024;
+
+    private Resource adminBanner = new AdminBannerResource();
 
     private List<String> amdBasePackages = Collections.singletonList("com.wxl.proxy.admin.cmd.impl");
 

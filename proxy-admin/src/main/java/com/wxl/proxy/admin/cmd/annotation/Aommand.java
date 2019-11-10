@@ -1,9 +1,6 @@
 package com.wxl.proxy.admin.cmd.annotation;
 
-import org.apache.commons.cli.Options;
-
 import java.lang.annotation.*;
-import java.util.function.Supplier;
 
 /**
  * Create by wuxingle on 2019/10/28
@@ -25,7 +22,17 @@ public @interface Aommand {
     String desc() default "";
 
     /**
-     * 选项类
+     * 用法
      */
-    Class<? extends Supplier<Options>> options() default EmptyOptionsSupplier.class;
+    String usage() default "";
+
+    /**
+     * 命令选项
+     */
+    String optionsMethod() default "";
+
+    /**
+     * 是否必须参数
+     */
+    boolean requireArgs() default false;
 }

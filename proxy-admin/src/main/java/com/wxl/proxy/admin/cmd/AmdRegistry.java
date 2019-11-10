@@ -15,8 +15,7 @@ public interface AmdRegistry extends AliasRegistry {
     /**
      * 注册命令
      */
-    void register(String name, AmdDefinition definition);
-
+    void register(AmdDefinition definition);
 
     /**
      * 获取命令定义
@@ -43,4 +42,14 @@ public interface AmdRegistry extends AliasRegistry {
      * 获取注册的个数
      */
     int getAmdCount();
+
+    /**
+     * 获取所有别名
+     */
+    List<String> getAllAlias();
+
+    /**
+     * 获取最终的名字
+     */
+    String canonicalName(String name);
 }

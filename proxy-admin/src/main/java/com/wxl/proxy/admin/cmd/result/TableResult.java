@@ -63,11 +63,11 @@ public class TableResult implements AmdResult {
     /**
      * 增加一列
      */
-    public TableResult addColumn(String column) {
+    public TableResult addColumn(Object column) {
         if (currentRow == -1) {
             nextRow();
         }
-        tables.get(currentRow).add(column);
+        tables.get(currentRow).add(column == null ? "" : column.toString());
         return this;
     }
 

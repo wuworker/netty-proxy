@@ -1,5 +1,6 @@
 package com.wxl.proxy.autoconfig.admin;
 
+import com.wxl.proxy.ProxySystemConstants;
 import com.wxl.proxy.admin.AdminTelnetServer;
 import com.wxl.proxy.admin.cmd.*;
 import com.wxl.proxy.admin.cmd.annotation.AmdClassPathScanner;
@@ -13,8 +14,13 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.core.io.Resource;
 import org.springframework.util.CollectionUtils;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -28,7 +34,8 @@ import static com.wxl.proxy.autoconfig.admin.AdminServerProperties.ADMIN_SERVER_
  */
 @Slf4j
 @Configuration
-@ConditionalOnProperty(prefix = ADMIN_SERVER_PREFIX, name = "enabled", havingValue = "true")
+@Import(value = AdminStatisticsAutoConfiguration.class)
+@ConditionalOnProperty(prefix = ADMIN_SERVER_PREFIX, name = "enabled", havingValue = "true", matchIfMissing = true)
 @EnableConfigurationProperties({AdminServerProperties.class})
 public class AdminServerAutoConfiguration {
 
@@ -44,10 +51,18 @@ public class AdminServerAutoConfiguration {
      */
     @Bean
     @ConditionalOnMissingBean
-    public AdminChannelInitializer adminChannelInitializer(AmdParser parser) {
+    public AdminChannelInitializer adminChannelInitializer(AmdParser parser) throws IOException {
         int maxCmdLength = properties.getMaxCmdLength();
         String tips = properties.getTips();
-        return new AdminChannelInitializer(maxCmdLength, tips, parser);
+        Resource banner = properties.getAdminBanner();
+        String bannerStr = null;
+        if (banner != null && banner.exists()) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                    banner.getInputStream(), ProxySystemConstants.DEFAULT_CHARSET))) {
+                bannerStr = reader.lines().reduce("", (s1, s2) -> s1 + s2 + ProxySystemConstants.DEFAULT_LINE_SPLIT);
+            }
+        }
+        return new AdminChannelInitializerEnhance(maxCmdLength, tips, parser, bannerStr);
     }
 
     @Bean
@@ -59,7 +74,7 @@ public class AdminServerAutoConfiguration {
                     "bind port is illegal");
         }
 
-        return new AdminTelnetServer(bindPort, channelInitializer,
+        return new AdminTelnetServer(bindPort, channelInitializer, properties.getServerName(),
                 groupManager.getBossGroup(), groupManager.getWorkGroup());
     }
 

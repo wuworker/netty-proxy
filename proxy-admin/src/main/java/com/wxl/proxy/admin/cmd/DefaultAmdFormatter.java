@@ -17,7 +17,6 @@ import static com.wxl.proxy.ProxySystemConstants.DEFAULT_CHARSET;
  */
 public class DefaultAmdFormatter implements AmdFormatter {
 
-
     private HelpFormatter formatter;
 
     public DefaultAmdFormatter() {
@@ -25,15 +24,15 @@ public class DefaultAmdFormatter implements AmdFormatter {
     }
 
     public DefaultAmdFormatter(HelpFormatter helpFormatter) {
-        Assert.notNull(helpFormatter, "formatter can not null!");
+        Assert.notNull(helpFormatter, "getAmdFormatter can not null!");
         this.formatter = helpFormatter;
     }
 
     @Order
-    public String format(String name, AmdDefinition definition) {
+    public String format(AmdDefinition definition) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        Options options = definition.options().get();
+        Options options = definition.options();
         if (options == null) {
             options = new Options();
         }
@@ -41,13 +40,13 @@ public class DefaultAmdFormatter implements AmdFormatter {
         try (PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(out, DEFAULT_CHARSET))) {
             formatter.printHelp(printWriter,
                     formatter.getWidth(),
-                    name,
-                    definition.description(),
+                    definition.usage(),
+                    "description: " + definition.description(),
                     options,
                     formatter.getLeftPadding(),
                     formatter.getDescPadding(),
                     null,
-                    true);
+                    false);
         }
         byte[] bytes = out.toByteArray();
         return new String(bytes, DEFAULT_CHARSET);

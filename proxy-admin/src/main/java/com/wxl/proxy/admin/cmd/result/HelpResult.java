@@ -12,26 +12,23 @@ import org.springframework.util.Assert;
  */
 public class HelpResult implements AmdResult {
 
-    private String name;
-
     private AmdFormatter formatter;
 
     private AmdDefinition definition;
 
-    public HelpResult(String name, AmdDefinition definition) {
-        this(name, definition, new DefaultAmdFormatter());
+    public HelpResult(AmdDefinition definition) {
+        this(definition, new DefaultAmdFormatter());
     }
 
-    public HelpResult(String name, AmdDefinition definition, AmdFormatter formatter) {
+    public HelpResult(AmdDefinition definition, AmdFormatter formatter) {
         Assert.notNull(definition, "command definition can not null");
-        Assert.notNull(formatter, "formatter can not null");
-        this.name = name;
+        Assert.notNull(formatter, "getAmdFormatter can not null");
         this.formatter = formatter;
         this.definition = definition;
     }
 
     @Override
     public String toString() {
-        return formatter.format(name, definition).trim();
+        return formatter.format(definition).trim();
     }
 }

@@ -1,12 +1,10 @@
 package com.wxl.proxy.admin.cmd.annotation;
 
-import com.wxl.proxy.admin.cmd.Amd;
 import com.wxl.proxy.admin.cmd.AmdDefinition;
 import com.wxl.proxy.admin.cmd.AmdDefinitionBuilder;
 import com.wxl.proxy.admin.cmd.AmdRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.BeanDefinitionStoreException;
-import org.springframework.core.annotation.AnnotationAttributes;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
@@ -85,14 +83,9 @@ public class AmdClassPathScanner {
                     MetadataReader metadataReader = getMetadataReaderFactory().getMetadataReader(resource);
                     AnnotationMetadata annotationMetadata = metadataReader.getAnnotationMetadata();
                     if (hasAommandAnnotation(annotationMetadata)) {
-
-                        AnnotationAttributes attributes = AnnotationAttributes.fromMap(
-                                annotationMetadata.getAnnotationAttributes(Aommand.class.getName()));
-
-                        String name = attributes.getString("name");
                         AmdDefinition amdDefinition = AmdDefinitionBuilder.of(annotationMetadata);
 
-                        registry.register(name, amdDefinition);
+                        registry.register(amdDefinition);
                     }
                 } else {
                     log.warn("ignore unreadable resource:{}", resource);

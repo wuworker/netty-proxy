@@ -1,6 +1,8 @@
 package com.wxl.proxy.admin.cmd.result;
 
 import com.wxl.proxy.admin.cmd.AmdDefinitionBuilder;
+import com.wxl.proxy.admin.cmd.impl.AliasAmd;
+import com.wxl.proxy.admin.cmd.impl.CloseAmd;
 import com.wxl.proxy.admin.cmd.impl.LsAmd;
 import org.junit.Test;
 
@@ -12,7 +14,7 @@ public class HelpResultTest {
 
     @Test
     public void test() {
-        HelpResult helpResult = new HelpResult("ls", AmdDefinitionBuilder.of(LsAmd.class));
+        HelpResult helpResult = new HelpResult(AmdDefinitionBuilder.of(AliasAmd.class));
         System.out.println(helpResult);
         System.out.println(helpResult.toString().endsWith("\n"));
     }

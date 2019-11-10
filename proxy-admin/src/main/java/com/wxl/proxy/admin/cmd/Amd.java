@@ -12,8 +12,4 @@ public interface Amd {
      */
     AmdResult invoke(AmdContext context) throws AmdInvokeException;
 
-    /**
-     * 命令名
-     */
-    String name();
 }

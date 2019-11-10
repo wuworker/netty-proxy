@@ -5,7 +5,7 @@ package com.wxl.proxy.admin.cmd;
  * 命令执行异常
  */
 @SuppressWarnings("serial")
-public class AmdInvokeException extends RuntimeException {
+public class AmdInvokeException extends Exception {
 
     public AmdInvokeException(String message) {
         this(message, null, false);

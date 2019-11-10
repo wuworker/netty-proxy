@@ -9,6 +9,6 @@ public interface AmdFormatter {
     /**
      * 格式化命令
      */
-    String format(String name, AmdDefinition definition);
+    String format(AmdDefinition definition);
 }
 

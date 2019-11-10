@@ -22,12 +22,4 @@ public class NoOpAmd implements Amd {
         return EMPTY_RESULT;
     }
 
-
-    /**
-     * 命令名
-     */
-    @Override
-    public String name() {
-        return "NoOp";
-    }
 }
