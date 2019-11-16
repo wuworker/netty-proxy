@@ -1,4 +1,4 @@
-package com.wxl.proxy.autoconfig.beanpost;
+package com.wxl.proxy.autoconfig.server;
 
 import com.wxl.proxy.admin.AdminTelnetServer;
 import com.wxl.proxy.autoconfig.exception.BeanConfigException;

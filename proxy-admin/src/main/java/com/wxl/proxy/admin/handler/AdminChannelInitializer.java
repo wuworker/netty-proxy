@@ -21,8 +21,6 @@ public class AdminChannelInitializer {
 
     private static final int DEFAULT_CMD_MAX_LEN = 1024;
 
-    private int cmdMaxLen;
-
     private String tips;
 
     private StringDecoder decoder;
@@ -32,14 +30,11 @@ public class AdminChannelInitializer {
     private AmdDecoder commandDecoder;
 
     public AdminChannelInitializer(AmdParser amdParser) {
-        this(DEFAULT_CMD_MAX_LEN, DEFAULT_TIPS, amdParser);
+        this(DEFAULT_TIPS, amdParser);
     }
 
-    public AdminChannelInitializer(int cmdMaxLen, String tips,
-                                   AmdParser amdParser) {
-        Assert.isTrue(cmdMaxLen > 0, "cmd maxLen must is > 0!");
+    public AdminChannelInitializer(String tips, AmdParser amdParser) {
         Assert.notNull(amdParser, "parser can not null!");
-        this.cmdMaxLen = cmdMaxLen;
         this.tips = tips;
         this.decoder = new StringDecoder(DEFAULT_CHARSET);
         this.encoder = new StringEncoder(DEFAULT_CHARSET);
@@ -48,10 +43,10 @@ public class AdminChannelInitializer {
 
     public void initChannel(SocketChannel ch) throws Exception {
         ch.pipeline().addLast(DelimiterBasedFrameDecoder.class.getName(),
-                new DelimiterBasedFrameDecoder(cmdMaxLen, Delimiters.lineDelimiter()))
+                new DelimiterBasedFrameDecoder(DEFAULT_CMD_MAX_LEN, Delimiters.lineDelimiter()))
                 .addLast(StringDecoder.class.getName(), decoder)
-                .addLast(AmdDecoder.class.getName(), commandDecoder)
                 .addLast(StringEncoder.class.getName(), encoder)
+                .addLast(AmdDecoder.class.getName(), commandDecoder)
                 .addLast(AdminChannelHandler.class.getName(), adminChannelHandler(tips));
 
     }

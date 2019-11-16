@@ -1,7 +1,5 @@
 package com.wxl.proxy.autoconfig.server;
 
-import com.wxl.proxy.autoconfig.beanpost.BindPortCheckBeanPostProcessor;
-import com.wxl.proxy.autoconfig.beanpost.ProxyServerPostProcessor;
 import com.wxl.proxy.server.LoopResources;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

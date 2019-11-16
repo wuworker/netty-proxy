@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
 
+import static com.wxl.proxy.ProxySystemConstants.DEFAULT_LINE_SPLIT;
 import static com.wxl.proxy.autoconfig.admin.AdminServerProperties.ADMIN_SERVER_PREFIX;
 
 /**
@@ -59,17 +60,16 @@ public class AdminServerAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public AdminChannelInitializer adminChannelInitializer(AmdParser parser) throws IOException {
-        int maxCmdLength = properties.getMaxCmdLength();
-        String tips = properties.getTips();
+
         Resource banner = properties.getAdminBanner();
         String bannerStr = null;
         if (banner != null && banner.exists()) {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(
                     banner.getInputStream(), ProxySystemConstants.DEFAULT_CHARSET))) {
-                bannerStr = reader.lines().reduce("", (s1, s2) -> s1 + s2 + ProxySystemConstants.DEFAULT_LINE_SPLIT);
+                bannerStr = reader.lines().reduce("", (s1, s2) -> s1 + s2 + DEFAULT_LINE_SPLIT);
             }
         }
-        return new AdminChannelInitializerEnhance(maxCmdLength, tips, parser, bannerStr);
+        return new AdminChannelInitializerEnhance(properties.getTips(), parser, bannerStr, properties.getPassword());
     }
 
     @Bean
@@ -125,8 +125,8 @@ public class AdminServerAutoConfiguration {
     @Bean(initMethod = "scan")
     @ConditionalOnMissingBean
     public AmdClassPathScanner amdClassPathScanner(AmdRegistry registry) {
-        List<String> amdBasePackages = properties.getAmdBasePackages();
-        List<String> amdAddBasePackages = properties.getAmdAddBasePackages();
+        List<String> amdBasePackages = properties.getAmd().getAmdBasePackages();
+        List<String> amdAddBasePackages = properties.getAmd().getAmdAddBasePackages();
         Set<String> packages = new LinkedHashSet<>();
         if (!CollectionUtils.isEmpty(amdBasePackages)) {
             packages.addAll(amdBasePackages);

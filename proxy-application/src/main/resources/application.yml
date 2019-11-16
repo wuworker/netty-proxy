@@ -5,8 +5,17 @@ spring:
     file: proxy.pid
 
 proxy:
+  boss-threads: 0
+  work-threads: 16
+  connect-timeout: 60s
   admin:
+    enabled: true
+    server-name: admin-manager
     bind-port: 23456
+    password:
+    tips: 'admin> '
+    admin-banner: classpath:proxy-admin.banner
     amd:
+      amd-base-packages: 'com.wxl.proxy.admin.cmd.impl'
       alias:
         ll: 'ls -l'

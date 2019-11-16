@@ -11,6 +11,10 @@
   * [配置http代理](#配置http代理)  
   * [配置https解密](#配置https解密)
   * [配置http二级代理](#配置http二级代理)
+* [管理员](#管理员)
+  * [telnet](#telent)
+  * [命令](#命令)
+  * [授权](#授权)
 
 ## 快速开始
 
@@ -120,6 +124,52 @@ proxy:
       host: remotehost
       port: 1080
       type: socks5
+```
+
+## 管理员
+
+通过telnet服务对代理进行管理
+
+### telnet
+
+默认启动telnet服务，默认端口绑定在23456
+```yaml
+admin:
+  enabled: true
+  server-name: admin-manager
+  bind-port: 23456
+```
+通过telnet进行连接
+```
+➜  ~ telnet 127.0.0.1 23456
+Trying 127.0.0.1...
+Connected to 127.0.0.1.
+Escape character is '^]'.
+ _
+|_._ _    /\ _._ _ o._
+| | (_>\//--(_| | ||| |
+       /
+
+admin> 
+```
+
+### 命令
+
+|command    |   description |
+|-----------|----------------|
+|  ls       | 列出所有代理    |
+| start     | 启动代理        |
+| alias     | 命名起别名      |
+|create     | 动态创建代理    |
+| quit      | 离开           | 
+| close     | 关闭代理       |
+
+### 授权
+增加配置password
+```yaml
+admin:
+  password: 123456
+
 ```
 
 # 参考

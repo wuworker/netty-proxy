@@ -1,4 +1,4 @@
-package com.wxl.proxy.autoconfig.beanpost;
+package com.wxl.proxy.autoconfig.server;
 
 import com.wxl.proxy.handler.BackendChannelInitializer;
 import com.wxl.proxy.handler.ComposeChannelInitializer;

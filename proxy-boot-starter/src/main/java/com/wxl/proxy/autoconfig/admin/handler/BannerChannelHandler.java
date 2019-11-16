@@ -26,8 +26,10 @@ public class BannerChannelHandler extends ChannelInboundHandlerAdapter {
         if (StringUtils.hasText(banner)) {
             ctx.write(banner);
         }
-        ctx.write("proxy version:" + PROXY_VERSION);
-        ctx.write(DEFAULT_LINE_SPLIT);
+        if (PROXY_VERSION != null) {
+            ctx.write(PROXY_VERSION);
+            ctx.write(DEFAULT_LINE_SPLIT);
+        }
         ctx.writeAndFlush(DEFAULT_LINE_SPLIT);
         ctx.fireChannelActive();
     }

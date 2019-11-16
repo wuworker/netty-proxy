@@ -1,9 +1,9 @@
 package com.wxl.proxy.autoconfig.admin;
 
 import com.wxl.proxy.admin.AdminTelnetServer;
-import com.wxl.proxy.autoconfig.admin.handler.AdminBannerResource;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 
 import java.util.*;
@@ -22,25 +22,51 @@ public class AdminServerProperties {
 
     private boolean enabled = true;
 
-    private Integer bindPort;
-
-    private String tips = "admin> ";
-
-    private int maxCmdLength = 1024;
-
-    private Resource adminBanner = new AdminBannerResource();
-
-    private List<String> amdBasePackages = Collections.singletonList("com.wxl.proxy.admin.cmd.impl");
-
-    private List<String> amdAddBasePackages = new ArrayList<>();
-
+    /**
+     * 默认服务名
+     */
     private String serverName = AdminTelnetServer.DEFAULT_SERVER_NAME;
 
+    /**
+     * 管理服务绑定端口
+     */
+    private Integer bindPort;
+
+    /**
+     * 授权密码
+     */
+    private String password;
+
+    /**
+     * 命令提示符
+     */
+    private String tips = "admin> ";
+
+    /**
+     * 打印banner
+     */
+    private Resource adminBanner = new ClassPathResource("proxy-admin.banner");
+
+
+    /**
+     * 管理命令相关
+     */
     private AmdProperties amd = new AmdProperties();
+
 
     @Data
     public static class AmdProperties {
 
+        /**
+         * 管理命令包路径
+         */
+        private List<String> amdBasePackages = Collections.singletonList("com.wxl.proxy.admin.cmd.impl");
+
+        private List<String> amdAddBasePackages = new ArrayList<>();
+
+        /**
+         * 命令别名
+         */
         private Map<String, String> alias = new HashMap<>();
     }
 }
