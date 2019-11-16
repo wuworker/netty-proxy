@@ -27,8 +27,7 @@ public class BannerChannelHandler extends ChannelInboundHandlerAdapter {
             ctx.write(banner);
         }
         if (PROXY_VERSION != null) {
-            ctx.write(PROXY_VERSION);
-            ctx.write(DEFAULT_LINE_SPLIT);
+            ctx.write("Version: " + PROXY_VERSION + DEFAULT_LINE_SPLIT);
         }
         ctx.writeAndFlush(DEFAULT_LINE_SPLIT);
         ctx.fireChannelActive();

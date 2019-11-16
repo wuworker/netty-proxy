@@ -40,3 +40,4 @@ pkg/
 release.properties
 release-pom.xml
 pom.xml.releaseBackup
+application-wxl.yml

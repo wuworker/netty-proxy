@@ -83,7 +83,7 @@ public class TcpProxyFrontHandler extends ProxyFrontHandler<TcpProxyConfig> {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        log.error("will close front connect: '{}', front handler cause exception:{}",
+        log.error("will close front connect: '{}', front handler cause exception",
                 ctx.channel().remoteAddress(), cause);
         super.exceptionCaught(ctx, cause);
     }

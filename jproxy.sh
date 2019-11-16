@@ -4,25 +4,33 @@
 
 PID_FILE=proxy.pid
 JAVA_OPTS=
-JAR_NAME=proxy-application-1.0-SNAPSHOT.jar
-START_CMD="java $JAVA_OPTS -jar $JAR_NAME"
 
+# 进入脚本所在绝对路径
+basedir=$(cd $(dirname $0); pwd -P)
+cd ${basedir}
+
+# 获取包名
+jar_name=$(ls|grep "proxy-application-*.*.jar")
+
+strat_cmd="java $JAVA_OPTS -jar $jar_name"
+
+
+# 获取pid
 pid=
 status(){
     if [ -f "${PID_FILE}" ];then
         pid=$(cat ${PID_FILE})
     fi
 }
-
 status
 
 case $1 in
 "start")
     if [ -z "$pid" ];then
         if [ "$2" == "-d" ];then
-            nohup ${START_CMD} &> /dev/null &
+            nohup ${strat_cmd} &> /dev/null &
         else
-            ${START_CMD}
+            ${strat_cmd}
         fi
      else
         echo "proxy already running in $pid"

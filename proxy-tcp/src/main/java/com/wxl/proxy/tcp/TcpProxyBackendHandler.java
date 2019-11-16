@@ -24,7 +24,7 @@ public class TcpProxyBackendHandler extends ProxyBackendHandler<TcpProxyConfig> 
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        log.error("will close backend connect: '{}', backend handler cause exception:{}",
+        log.error("will close backend connect: '{}', backend handler cause exception",
                 ctx.channel().remoteAddress(), cause);
         super.exceptionCaught(ctx, cause);
     }
