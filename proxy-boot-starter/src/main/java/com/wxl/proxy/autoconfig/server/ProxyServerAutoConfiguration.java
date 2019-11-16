@@ -2,6 +2,8 @@ package com.wxl.proxy.autoconfig.server;
 
 import com.wxl.proxy.autoconfig.beanpost.BindPortCheckBeanPostProcessor;
 import com.wxl.proxy.autoconfig.beanpost.ProxyServerPostProcessor;
+import com.wxl.proxy.server.LoopResources;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,10 +23,11 @@ public class ProxyServerAutoConfiguration {
     }
 
     @Bean
-    public EventLoopGroupManager eventLoopGroupManager() {
+    @ConditionalOnMissingBean
+    public LoopResources loopResources() {
         int bossThreads = proxyProperties.getBossThreads();
         int workThreads = proxyProperties.getWorkThreads();
-        return new EventLoopGroupManager(bossThreads, workThreads);
+        return new GlobalLoopResources(bossThreads, workThreads);
     }
 
     /**

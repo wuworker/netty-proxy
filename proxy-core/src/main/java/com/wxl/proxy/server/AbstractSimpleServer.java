@@ -16,9 +16,7 @@ import org.springframework.util.Assert;
  */
 public abstract class AbstractSimpleServer implements SimpleServer {
 
-    private final EventLoopGroup boosGroup;
-
-    private final EventLoopGroup workGroup;
+    private LoopResource loopResource;
 
     private boolean running;
 
@@ -26,13 +24,10 @@ public abstract class AbstractSimpleServer implements SimpleServer {
 
     private int bindPort;
 
-    public AbstractSimpleServer(int bindPort,
-                                EventLoopGroup boosGroup,
-                                EventLoopGroup workGroup) {
-        Assert.notNull(workGroup, "work event loop group can not null!");
-        Assert.notNull(boosGroup, "boss event loop group can not null!");
-        this.boosGroup = boosGroup;
-        this.workGroup = workGroup;
+
+    public AbstractSimpleServer(int bindPort, LoopResource loopResource) {
+        Assert.notNull(loopResource, "loop resource can not null!");
+        this.loopResource = loopResource;
         this.bindPort = bindPort;
     }
 
@@ -40,6 +35,10 @@ public abstract class AbstractSimpleServer implements SimpleServer {
     public final void start() {
         try {
             ServerBootstrap bootstrap = new ServerBootstrap();
+
+            EventLoopGroup boosGroup = loopResource.bossGroup();
+            EventLoopGroup workGroup = loopResource.workGroup();
+
             bootstrap.group(boosGroup, workGroup)
                     .channel(NioServerSocketChannel.class)
                     .handler(new ChannelInitializer<ServerSocketChannel>() {
@@ -83,6 +82,15 @@ public abstract class AbstractSimpleServer implements SimpleServer {
         return running;
     }
 
+    @Override
+    public int bindPort() {
+        return bindPort;
+    }
+
+    @Override
+    public LoopResource loopResource() {
+        return loopResource;
+    }
 
     /**
      * 其他配置

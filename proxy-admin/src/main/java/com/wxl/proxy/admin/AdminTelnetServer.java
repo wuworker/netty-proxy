@@ -3,8 +3,8 @@ package com.wxl.proxy.admin;
 import com.wxl.proxy.admin.handler.AdminChannelInitializer;
 import com.wxl.proxy.log.ServerLoggingHandler;
 import com.wxl.proxy.server.AbstractSimpleServer;
+import com.wxl.proxy.server.LoopResource;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.ServerSocketChannel;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.util.AttributeKey;
@@ -34,13 +34,13 @@ public class AdminTelnetServer extends AbstractSimpleServer
     private int bindPort;
 
     public AdminTelnetServer(int bindPort, AdminChannelInitializer channelInitializer,
-                             EventLoopGroup boosGroup, EventLoopGroup workGroup) {
-        this(bindPort, channelInitializer, DEFAULT_SERVER_NAME, boosGroup, workGroup);
+                             LoopResource loopResource) {
+        this(bindPort, channelInitializer, DEFAULT_SERVER_NAME, loopResource);
     }
 
     public AdminTelnetServer(int bindPort, AdminChannelInitializer channelInitializer, String name,
-                             EventLoopGroup boosGroup, EventLoopGroup workGroup) {
-        super(bindPort, boosGroup, workGroup);
+                             LoopResource loopResource) {
+        super(bindPort, loopResource);
         this.bindPort = bindPort;
         this.channelInitializer = channelInitializer;
         this.name = name;

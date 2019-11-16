@@ -17,4 +17,9 @@ public interface SimpleServer extends Lifecycle {
      * 当前绑定的端口
      */
     int bindPort();
+
+    /**
+     * 事件循环资源
+     */
+    LoopResource loopResource();
 }

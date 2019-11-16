@@ -21,6 +21,7 @@ public class DefaultAmdFormatter implements AmdFormatter {
 
     public DefaultAmdFormatter() {
         this(new HelpFormatter());
+        formatter.setOptionComparator(null);
     }
 
     public DefaultAmdFormatter(HelpFormatter helpFormatter) {

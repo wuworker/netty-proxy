@@ -1,7 +1,7 @@
 package com.wxl.proxy.tcp;
 
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
+import com.wxl.proxy.server.LoopResources;
+import com.wxl.proxy.server.NioLoopResources;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;
@@ -22,16 +22,17 @@ public class TcpProxyServerTest {
                 .bindPort(8888)
                 .remoteAddress(new InetSocketAddress("localhost", 6379))
                 .build();
-        EventLoopGroup boss = new NioEventLoopGroup();
-        EventLoopGroup work = new NioEventLoopGroup();
 
-        TcpProxyServer server = new TcpProxyServer(config, boss, work);
+        LoopResources loopResources = new NioLoopResources();
+        TcpLoopResource tcpLoopResource = TcpLoopResource.create(loopResources);
+
+        TcpProxyServer server = new TcpProxyServer(config, tcpLoopResource);
         server.start();
 
         new CountDownLatch(1).await();
 
-        work.shutdownGracefully();
-        boss.shutdownGracefully();
+        tcpLoopResource.release();
+        loopResources.release();
     }
 
 }

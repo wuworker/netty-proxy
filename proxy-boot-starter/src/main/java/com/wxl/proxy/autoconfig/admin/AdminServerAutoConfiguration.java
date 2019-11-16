@@ -6,9 +6,11 @@ import com.wxl.proxy.admin.cmd.*;
 import com.wxl.proxy.admin.cmd.annotation.AmdClassPathScanner;
 import com.wxl.proxy.admin.handler.AdminChannelInitializer;
 import com.wxl.proxy.autoconfig.exception.BeanConfigException;
-import com.wxl.proxy.autoconfig.server.EventLoopGroupManager;
+import com.wxl.proxy.server.LoopResource;
+import com.wxl.proxy.server.LoopResources;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -21,10 +23,7 @@ import org.springframework.util.CollectionUtils;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.wxl.proxy.autoconfig.admin.AdminServerProperties.ADMIN_SERVER_PREFIX;
 
@@ -39,11 +38,19 @@ import static com.wxl.proxy.autoconfig.admin.AdminServerProperties.ADMIN_SERVER_
 @EnableConfigurationProperties({AdminServerProperties.class})
 public class AdminServerAutoConfiguration {
 
+    private static final String ADMIN_LOOP_RESOURCE_BEAN_NAME = "adminLoopResource";
+
     private AdminServerProperties properties;
 
     @Autowired
     public AdminServerAutoConfiguration(AdminServerProperties properties) {
         this.properties = properties;
+    }
+
+    @Bean(value = ADMIN_LOOP_RESOURCE_BEAN_NAME, destroyMethod = "release")
+    @ConditionalOnMissingBean(name = ADMIN_LOOP_RESOURCE_BEAN_NAME)
+    public LoopResource adminLoopResource(LoopResources loopResources) {
+        return loopResources.alloc("admin");
     }
 
     /**
@@ -66,16 +73,16 @@ public class AdminServerAutoConfiguration {
     }
 
     @Bean
-    public AdminTelnetServer adminTelnetServer(AdminChannelInitializer channelInitializer,
-                                               EventLoopGroupManager groupManager) {
+    public AdminTelnetServer adminTelnetServer(@Qualifier(ADMIN_LOOP_RESOURCE_BEAN_NAME) LoopResource loopResource,
+                                               AdminChannelInitializer channelInitializer) {
         Integer bindPort = properties.getBindPort();
         if (bindPort == null || bindPort <= 0 || bindPort > 0xffff) {
             throw new BeanConfigException("proxy.admin.bind-port",
                     "bind port is illegal");
         }
 
-        return new AdminTelnetServer(bindPort, channelInitializer, properties.getServerName(),
-                groupManager.getBossGroup(), groupManager.getWorkGroup());
+        return new AdminTelnetServer(bindPort, channelInitializer,
+                properties.getServerName(), loopResource);
     }
 
     /**
@@ -93,7 +100,14 @@ public class AdminServerAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public AmdRegistry amdRegistry() {
-        return new DefaultAmdRegistry();
+        DefaultAmdRegistry registry = new DefaultAmdRegistry();
+
+        Map<String, String> alias = properties.getAmd().getAlias();
+        for (Map.Entry<String, String> entry : alias.entrySet()) {
+            registry.registerAlias(entry.getValue(), entry.getKey());
+        }
+
+        return registry;
     }
 
     /**

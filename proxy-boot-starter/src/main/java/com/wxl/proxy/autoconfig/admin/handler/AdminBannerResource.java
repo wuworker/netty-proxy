@@ -18,10 +18,6 @@ public class AdminBannerResource extends ByteArrayResource {
             "       /               " + DEFAULT_LINE_SPLIT)
             .getBytes(ProxySystemConstants.DEFAULT_CHARSET);
 
-    public static void main(String[] args) {
-        System.out.println(new String(BANNER));
-    }
-
     public AdminBannerResource() {
         super(BANNER);
     }

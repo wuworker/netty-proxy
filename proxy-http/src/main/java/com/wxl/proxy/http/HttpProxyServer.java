@@ -3,7 +3,6 @@ package com.wxl.proxy.http;
 import com.wxl.proxy.handler.ProxyChannelInitializer;
 import com.wxl.proxy.http.interceptor.HttpProxyInterceptorInitializer;
 import com.wxl.proxy.server.AbstractProxyServer;
-import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpServerCodec;
 import lombok.extern.slf4j.Slf4j;
@@ -20,10 +19,8 @@ public class HttpProxyServer extends AbstractProxyServer<HttpProxyConfig> implem
 
     private HttpProxyInterceptorInitializer interceptorInitializer;
 
-    public HttpProxyServer(HttpProxyConfig config,
-                           EventLoopGroup boosGroup,
-                           EventLoopGroup workGroup) {
-        super(config, boosGroup, workGroup);
+    public HttpProxyServer(HttpProxyConfig config, HttpLoopResource loopResource) {
+        super(config, loopResource);
     }
 
     public void setHttpInterceptorInitializer(HttpProxyInterceptorInitializer interceptorInitializer) {

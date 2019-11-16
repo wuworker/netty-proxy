@@ -1,6 +1,6 @@
 package com.wxl.proxy.autoconfig.tcp;
 
-import com.wxl.proxy.autoconfig.server.EventLoopGroupManager;
+import com.wxl.proxy.tcp.TcpLoopResource;
 import com.wxl.proxy.tcp.TcpProxyConfig;
 import com.wxl.proxy.tcp.TcpProxyServer;
 import lombok.Getter;
@@ -26,8 +26,9 @@ public class TcpProxyServerFactoryBean implements FactoryBean<TcpProxyServer>, A
 
     @Override
     public TcpProxyServer getObject() throws Exception {
-        EventLoopGroupManager manager = applicationContext.getBean(EventLoopGroupManager.class);
-        TcpProxyServer server = new TcpProxyServer(config, manager.getBossGroup(), manager.getWorkGroup());
+        TcpLoopResource loopResource = applicationContext.getBean(TcpLoopResource.class);
+
+        TcpProxyServer server = new TcpProxyServer(config, loopResource);
 
         log.debug("create tcp proxy server:{}", config);
         return server;

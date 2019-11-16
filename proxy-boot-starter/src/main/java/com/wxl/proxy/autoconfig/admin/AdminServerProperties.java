@@ -6,9 +6,7 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.core.io.Resource;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.wxl.proxy.autoconfig.server.ProxyProperties.PROXY_PREFIX;
 
@@ -38,5 +36,12 @@ public class AdminServerProperties {
 
     private String serverName = AdminTelnetServer.DEFAULT_SERVER_NAME;
 
+    private AmdProperties amd = new AmdProperties();
+
+    @Data
+    public static class AmdProperties {
+
+        private Map<String, String> alias = new HashMap<>();
+    }
 }
 

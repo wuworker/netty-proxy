@@ -4,7 +4,6 @@ import com.wxl.proxy.handler.ProxyChannelInitializer;
 import com.wxl.proxy.log.ServerLoggingHandler;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.ServerSocketChannel;
 import io.netty.channel.socket.SocketChannel;
 
@@ -24,10 +23,8 @@ public abstract class AbstractProxyServer<T extends ProxyConfig>
 
     private T config;
 
-    public AbstractProxyServer(T config,
-                               EventLoopGroup boosGroup,
-                               EventLoopGroup workGroup) {
-        super(config.getBindPort(), boosGroup, workGroup);
+    public AbstractProxyServer(T config, LoopResource loopResource) {
+        super(config.getBindPort(), loopResource);
         this.config = config;
     }
 
@@ -39,11 +36,6 @@ public abstract class AbstractProxyServer<T extends ProxyConfig>
     @Override
     public String name() {
         return config.getServerName();
-    }
-
-    @Override
-    public int bindPort() {
-        return config.getBindPort();
     }
 
     @Override

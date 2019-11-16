@@ -2,7 +2,6 @@ package com.wxl.proxy.tcp;
 
 import com.wxl.proxy.handler.ProxyChannelInitializer;
 import com.wxl.proxy.server.AbstractProxyServer;
-import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import lombok.extern.slf4j.Slf4j;
 
@@ -16,10 +15,8 @@ import static com.wxl.proxy.server.ProxyServer.logHandler;
 public class TcpProxyServer extends AbstractProxyServer<TcpProxyConfig> {
 
 
-    public TcpProxyServer(TcpProxyConfig config,
-                          EventLoopGroup boosGroup,
-                          EventLoopGroup workGroup) {
-        super(config, boosGroup, workGroup);
+    public TcpProxyServer(TcpProxyConfig config, TcpLoopResource loopResource) {
+        super(config, loopResource);
     }
 
     @Override

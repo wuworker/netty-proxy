@@ -3,19 +3,21 @@ package com.wxl.proxy.autoconfig.http;
 import com.wxl.proxy.autoconfig.exception.BeanConfigException;
 import com.wxl.proxy.autoconfig.http.HttpProxyProperties.SecondProxyProperties;
 import com.wxl.proxy.autoconfig.http.HttpProxyProperties.SslProperties;
-import com.wxl.proxy.autoconfig.server.EventLoopGroupManager;
 import com.wxl.proxy.autoconfig.server.ProxyProperties;
+import com.wxl.proxy.http.HttpLoopResource;
 import com.wxl.proxy.http.HttpProxyConfig;
 import com.wxl.proxy.http.HttpProxyServer;
 import com.wxl.proxy.http.interceptor.HttpProxyInterceptorInitializer;
 import com.wxl.proxy.http.proxy.SecondProxyConfig;
 import com.wxl.proxy.http.ssl.SslConfig;
 import com.wxl.proxy.http.utils.CertUtils;
+import com.wxl.proxy.server.LoopResources;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.ResourceLoaderAware;
@@ -65,8 +67,15 @@ public class HttpProxyAutoConfiguration implements ResourceLoaderAware {
         this.resourceLoader = resourceLoader;
     }
 
+
+    @Bean(destroyMethod = "release")
+    @ConditionalOnMissingBean
+    public HttpLoopResource httpLoopResource(LoopResources loopResources) {
+        return HttpLoopResource.create(loopResources);
+    }
+
     @Bean
-    public HttpProxyServer httpProxyServer(EventLoopGroupManager groupManager,
+    public HttpProxyServer httpProxyServer(HttpLoopResource loopResource,
                                            ObjectProvider<HttpProxyInterceptorInitializer> interceptorInitializers) {
         Duration connectTimeout = httpProperties.getConnectTimeout();
         if (connectTimeout == null) {
@@ -108,7 +117,8 @@ public class HttpProxyAutoConfiguration implements ResourceLoaderAware {
 
         log.debug("create http proxy server:{}", config);
 
-        HttpProxyServer server = new HttpProxyServer(config, groupManager.getBossGroup(), groupManager.getWorkGroup());
+
+        HttpProxyServer server = new HttpProxyServer(config, loopResource);
 
         // http拦截器
         List<HttpProxyInterceptorInitializer> initializers = interceptorInitializers.orderedStream().collect(Collectors.toList());

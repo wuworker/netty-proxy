@@ -4,9 +4,9 @@ import com.wxl.proxy.http.interceptor.HttpProxyInterceptor;
 import com.wxl.proxy.http.interceptor.HttpProxyInterceptorPipeline;
 import com.wxl.proxy.http.ssl.SslConfig;
 import com.wxl.proxy.http.utils.CertUtils;
+import com.wxl.proxy.server.LoopResources;
+import com.wxl.proxy.server.NioLoopResources;
 import io.netty.channel.Channel;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
@@ -35,17 +35,17 @@ public class HttpProxyServerTest {
                 .connectTimeout(Duration.ofSeconds(5))
                 .build();
 
-        EventLoopGroup boss = new NioEventLoopGroup();
-        EventLoopGroup work = new NioEventLoopGroup();
+        LoopResources loopResources = new NioLoopResources();
+        HttpLoopResource httpLoopResource = HttpLoopResource.create(loopResources);
 
-        HttpProxyServer server = new HttpProxyServer(config, boss, work);
+        HttpProxyServer server = new HttpProxyServer(config, httpLoopResource);
 
         server.start();
 
         new CountDownLatch(1).await();
 
-        boss.shutdownGracefully();
-        work.shutdownGracefully();
+        httpLoopResource.release();
+        loopResources.release();
     }
 
     /**
@@ -80,10 +80,10 @@ public class HttpProxyServerTest {
                 .ssl(sslConfig)
                 .build();
 
-        EventLoopGroup boss = new NioEventLoopGroup();
-        EventLoopGroup work = new NioEventLoopGroup();
+        LoopResources loopResources = new NioLoopResources();
+        HttpLoopResource httpLoopResource = HttpLoopResource.create(loopResources);
 
-        HttpProxyServer server = new HttpProxyServer(config, boss, work);
+        HttpProxyServer server = new HttpProxyServer(config, httpLoopResource);
 
         // http报文解析
         server.setHttpInterceptorInitializer(pipeline ->
@@ -112,7 +112,7 @@ public class HttpProxyServerTest {
 
         new CountDownLatch(1).await();
 
-        boss.shutdownGracefully();
-        work.shutdownGracefully();
+        httpLoopResource.release();
+        loopResources.release();
     }
 }

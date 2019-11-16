@@ -3,6 +3,8 @@ package com.wxl.proxy.autoconfig.tcp;
 import com.wxl.proxy.autoconfig.exception.BeanConfigException;
 import com.wxl.proxy.autoconfig.server.ProxyProperties;
 import com.wxl.proxy.autoconfig.tcp.TcpProxyProperties.TcpServerProperties;
+import com.wxl.proxy.server.LoopResources;
+import com.wxl.proxy.tcp.TcpLoopResource;
 import com.wxl.proxy.tcp.TcpProxyConfig;
 import com.wxl.proxy.tcp.TcpProxyServer;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +15,7 @@ import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.bind.BindResult;
 import org.springframework.boot.context.properties.bind.Binder;
@@ -47,10 +50,19 @@ public class TcpProxyAutoConfiguration {
         return serverManager;
     }
 
+
+    @Bean(destroyMethod = "release")
+    @ConditionalOnMissingBean
+    public TcpLoopResource tcpLoopResource(LoopResources loopResources) {
+        return TcpLoopResource.create(loopResources);
+    }
+
+
     @Bean
     public static TcpProxyServerBeanDefinitionRegister tcpProxyServerBeanDefinitionRegister() {
         return new TcpProxyServerBeanDefinitionRegister();
     }
+
 
     /**
      * 注册TcpProxyServer

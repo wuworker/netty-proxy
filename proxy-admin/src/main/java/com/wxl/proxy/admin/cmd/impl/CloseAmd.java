@@ -27,11 +27,11 @@ public class CloseAmd extends AbstractAmd {
     @Override
     protected AmdResult invoke(CommandLine cmdline, AmdContext context) throws AmdInvokeException {
         if (cmdline == null) {
-            throw new AmdInvokeException("amd close must has cmdLine");
+            throw new AmdInvokeException("'close' must has cmdLine");
         }
         String[] args = cmdline.getArgs();
         if (args.length == 0) {
-            throw new AmdInvokeException("amd close must has one args");
+            throw new AmdInvokeException("'close' must has one args,usage: close proxyName");
         }
         ProxyServerRegistry proxyServerRegistry = context.getProxyServerRegistry();
         for (String name : args) {

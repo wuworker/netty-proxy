@@ -1,6 +1,7 @@
 package com.wxl.proxy.admin.statistics;
 
 import com.wxl.proxy.server.ProxyServer;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.ObjectProvider;
 
 import java.util.ArrayList;
@@ -13,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Create by wuxingle on 2019/11/6
  * proxyServer注册中心
  */
-public class ProxyServerRegistry {
+public class ProxyServerRegistry implements DisposableBean {
 
     private Map<Integer, String> bindPorts = new ConcurrentHashMap<>();
 
@@ -23,6 +24,19 @@ public class ProxyServerRegistry {
 
     public ProxyServerRegistry(ObjectProvider<ProxyServer<?>> proxyServers) {
         proxyServers.stream().forEach(proxyServer -> permanent.put(proxyServer.name(), proxyServer));
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        if (!temporary.isEmpty()) {
+            for (ProxyServer<?> proxyServer : temporary.values()) {
+                synchronized (proxyServer) {
+                    if (proxyServer.isRunning()) {
+                        proxyServer.stop();
+                    }
+                }
+            }
+        }
     }
 
     /**

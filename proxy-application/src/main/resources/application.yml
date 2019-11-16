@@ -7,3 +7,6 @@ spring:
 proxy:
   admin:
     bind-port: 23456
+    amd:
+      alias:
+        ll: 'ls -l'

@@ -65,7 +65,7 @@ public class AliasAmd extends AbstractAmd {
             String[] args = cmdline.getArgs();
             if (args.length != 0) {
                 if (args.length != 2) {
-                    throw new AmdInvokeException("alias must have two args:key value");
+                    throw new AmdInvokeException("'alias' must have two args:key value");
                 }
                 registry.registerAlias(args[1].replaceAll("[\"']", ""), args[0]);
                 return new EmptyResult();

@@ -29,11 +29,11 @@ public class StartAmd extends AbstractAmd {
     @Override
     protected AmdResult invoke(CommandLine cmdline, AmdContext context) throws AmdInvokeException {
         if (cmdline == null) {
-            throw new AmdInvokeException("amd start must has cmdLine");
+            throw new AmdInvokeException("'start' must has cmdLine");
         }
         String[] args = cmdline.getArgs();
         if (args.length == 0) {
-            throw new AmdInvokeException("amd start must has one args");
+            throw new AmdInvokeException("'start' must has one args,usage: start proxyName");
         }
         ProxyServerRegistry proxyServerRegistry = context.getProxyServerRegistry();
         for (String name : args) {
