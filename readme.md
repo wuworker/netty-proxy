@@ -12,7 +12,7 @@
   * [配置https解密](#配置https解密)
   * [配置http二级代理](#配置http二级代理)
 * [管理员](#管理员)
-  * [telnet](#telent)
+  * [telnet](#telnet)
   * [命令](#命令)
   * [授权](#授权)
 
