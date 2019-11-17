@@ -20,13 +20,13 @@
 
     <groupId>com.wxl.proxy</groupId>
     <artifactId>netty-proxy</artifactId>
-    <version>1.2.1</version>
+    <version>1.2.2-SNAPSHOT</version>
     <name>proxy</name>
     <description>Netty Proxy Project</description>
 
     <scm>
         <developerConnection>scm:git:git@github.com:wuworker/netty-proxy.git</developerConnection>
-        <tag>v1.2.1</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <properties>
