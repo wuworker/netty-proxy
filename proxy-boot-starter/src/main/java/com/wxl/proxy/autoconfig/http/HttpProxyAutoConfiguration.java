@@ -46,7 +46,6 @@ import static com.wxl.proxy.autoconfig.http.HttpProxyProperties.HTTP_PROXY_PREFI
  */
 @Slf4j
 @Configuration
-@ConditionalOnProperty(prefix = HTTP_PROXY_PREFIX, name = "enabled", havingValue = "true")
 @EnableConfigurationProperties({ProxyProperties.class, HttpProxyProperties.class})
 public class HttpProxyAutoConfiguration implements ResourceLoaderAware {
 
@@ -75,6 +74,7 @@ public class HttpProxyAutoConfiguration implements ResourceLoaderAware {
     }
 
     @Bean
+    @ConditionalOnProperty(prefix = HTTP_PROXY_PREFIX, name = "enabled", havingValue = "true")
     public HttpProxyServer httpProxyServer(HttpLoopResource loopResource,
                                            ObjectProvider<HttpProxyInterceptorInitializer> interceptorInitializers) {
         Duration connectTimeout = httpProperties.getConnectTimeout();

@@ -39,7 +39,6 @@ import static com.wxl.proxy.autoconfig.tcp.TcpProxyProperties.TCP_PROXY_PREFIX;
  */
 @Slf4j
 @Configuration
-@ConditionalOnProperty(prefix = TCP_PROXY_PREFIX, name = "enabled", havingValue = "true")
 public class TcpProxyAutoConfiguration {
 
     @Bean
@@ -59,6 +58,7 @@ public class TcpProxyAutoConfiguration {
 
 
     @Bean
+    @ConditionalOnProperty(prefix = TCP_PROXY_PREFIX, name = "enabled", havingValue = "true")
     public static TcpProxyServerBeanDefinitionRegister tcpProxyServerBeanDefinitionRegister() {
         return new TcpProxyServerBeanDefinitionRegister();
     }
@@ -89,7 +89,7 @@ public class TcpProxyAutoConfiguration {
             }
 
             if (CollectionUtils.isEmpty(tcpProperties.getServer())) {
-                log.warn("no tcp proxy server! can autoconfig '" + TCP_PROXY_PREFIX + ".enabled=false' to disable tcp proxy");
+                log.debug("no tcp proxy server!");
                 return;
             }
 
